@@ -120,3 +120,28 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+
+@keyframes pokeball-shake {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  10%,
+  50% {
+    transform: translate(-50%, -50%) rotate(-15deg);
+  }
+  30%,
+  70% {
+    transform: translate(-50%, -50%) rotate(15deg);
+  }
+  90% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+}
+
+.animate-pokeball-shake {
+  animation: pokeball-shake 1.8s ease-in-out forwards;
+}
+

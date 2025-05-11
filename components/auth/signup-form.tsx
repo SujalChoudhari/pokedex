@@ -22,12 +22,32 @@ export function SignUpForm() {
     setError(null)
 
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
       })
 
-      if (error) throw error
+      if (signUpError) throw signUpError
+
+      // Create default trainer profile
+      const { error: profileError } = await supabase
+        .from('trainers')
+        .insert([{
+          user_id: data.user?.id,
+          name: email.split('@')[0], // Use email username as default name
+          stats: {
+            totalPokemonCaught: 0,
+            uniquePokemonTypes: 0,
+            highestLevelPokemon: 0,
+            favoritePokemonType: '',
+            winRate: 0
+          }
+        }])
+
+      if (profileError) {
+        console.error('Error creating trainer profile:', profileError)
+        // Continue anyway as the user can create profile later
+      }
 
       router.push("/login")
     } catch (error: any) {
@@ -38,51 +58,69 @@ export function SignUpForm() {
   }
 
   return (
-    <Card className="w-[350px]">
-      <CardHeader>
-        <CardTitle>Sign Up</CardTitle>
-        <CardDescription>Create a new account to access your Pokedex</CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSignUp}>
-        <CardContent>
-          <div className="grid w-full items-center gap-4">
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+    <div className="w-[350px] mx-auto font-mono">
+      {/* Kanto Pokedex Mini Frame */}
+      <div className="w-full bg-red-700 shadow-lg border-red-900 rounded-lg overflow-hidden">
+
+        
+        {/* Screen Area */}
+        <div className="m-2 bg-gray-700 rounded border-2 border-gray-800 shadow-inner p-2">
+          <div className="bg-lime-100 rounded overflow-hidden border-2 border-lime-500">
+            {/* Header */}
+            <div className="bg-lime-200 border-b-2 border-lime-500 p-3">
+              <h1 className="text-black font-bold text-lg uppercase tracking-wide text-center">Sign Up</h1>
+              <p className="text-gray-700 text-sm text-center mt-1">Create a new account to access your Pokedex</p>
             </div>
-            <div className="flex flex-col space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
+
+            {/* Form */}
+            <form onSubmit={handleSignUp} className="p-4 space-y-4">
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="text-gray-800 font-medium">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="bg-lime-50 border-lime-500 text-gray-800 placeholder:text-gray-500"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="password" className="text-gray-800 font-medium">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="bg-lime-50 border-lime-500 text-gray-800 placeholder:text-gray-500"
+                  />
+                </div>
+                {error && <p className="text-sm text-red-600 bg-red-100 p-2 rounded border border-red-200">{error}</p>}
+              </div>
+
+              <div className="pt-2 space-y-3">
+                <Button 
+                  type="submit" 
+                  className="w-full bg-red-500 hover:bg-red-600 text-white border-b-4 border-red-700 active:border-b-0 active:mt-1 transition-all uppercase font-bold tracking-wide" 
+                  disabled={loading}
+                >
+                  {loading ? "Creating..." : "Sign Up"}
+                </Button>
+                <p className="text-sm text-gray-600 text-center">
+                  Already have an account?{" "}
+                  <Link href="/login" className="text-red-500 hover:text-red-600 font-bold">
+                    Login
+                  </Link>
+                </p>
+              </div>
+            </form>
           </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-2">
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Sign Up"}
-          </Button>
-          <p className="text-sm text-gray-500">
-            Already have an account?{" "}
-            <Link href="/login" className="text-blue-500 hover:underline">
-              Login
-            </Link>
-          </p>
-        </CardFooter>
-      </form>
-    </Card>
+        </div>
+      </div>
+    </div>
   )
 }
