@@ -285,7 +285,7 @@ export function CameraCapture({ onCaptureSuccess }: CameraCaptureProps) {
                                     <img
                                         src={selectedImage}
                                         alt="Selected Preview"
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-contain"
                                     />
                                 ) : (
                                     <Webcam
@@ -293,9 +293,9 @@ export function CameraCapture({ onCaptureSuccess }: CameraCaptureProps) {
                                         screenshotFormat="image/jpeg"
                                         videoConstraints={{
                                             facingMode: "environment",
-                                            aspectRatio: 9 / 16, // 4:3 for desktops, 16:9 for mobile
+                                            // aspectRatio: 9 / 16, // 4:3 for desktops, 16:9 for mobile
                                         }}
-                                        className="h-full w-fit object-cover"
+                                        className=" object-contain"
                                         mirrored={false}
                                         audio={false}
                                         onUserMediaError={(e) => console.error("Webcam Error:", e)} // Log errors

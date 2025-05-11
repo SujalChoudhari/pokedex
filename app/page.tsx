@@ -1,6 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import Image from "next/image";
+import { usePWA } from "@/lib/hooks/use-pwa";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const { isInstallable, isInstalled, promptToInstall } = usePWA();
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-500 to-red-600 p-4">
       <div className="max-w-md mx-auto pt-12">
@@ -19,6 +26,16 @@ export default function Home() {
           {/* Main Content */}
           <div className="mt-12 mb-8">
             <div className="bg-green-100 rounded-lg border-2 border-gray-800 p-6 shadow-inner">
+              <div className="flex justify-center mb-6">
+                <Image
+                  src="/logo.png"
+                  alt="Pokédex Logo"
+                  width={120}
+                  height={120}
+                  className="rounded-lg shadow-lg"
+                  priority
+                />
+              </div>
               <h1 className="text-2xl font-bold text-center mb-4 font-mono text-gray-800">
                 POKÉDEX v2.0
               </h1>
@@ -30,7 +47,18 @@ export default function Home() {
 
           {/* Control Pad Design */}
           <div className="flex justify-center gap-6 mb-8">
-            <div className="w-24 h-24 rounded-full border-4 border-gray-800 bg-gray-900"></div>
+            <div className="w-24 h-24 rounded-full border-4 border-gray-800 bg-gray-900 relative overflow-hidden">
+              <div className="absolute inset-0 flex items-center justify-center">
+                {isInstallable && !isInstalled && (
+                  <button 
+                    onClick={promptToInstall}
+                    className="text-white text-xs font-bold hover:text-blue-300 transition-colors p-2 rounded-full hover:bg-gray-800/50"
+                  >
+                    Install App
+                  </button>
+                )}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="h-8 w-12 bg-gray-800 rounded"></div>
               <div className="h-8 w-12 bg-gray-800 rounded"></div>
