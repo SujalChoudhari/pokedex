@@ -89,7 +89,7 @@ export function PokemonTeamSelector({ profile, onTeamUpdate }: PokemonTeamSelect
     const renderPokemonCard = (pokemon: CapturedPokemon, index?: number, isTeam = false) => (
         <Card
             key={pokemon.id}
-            className={`bg-lime-50 border-lime-500 aspect-square  relative ${isTeam ? 'cursor-move' : ''}`}
+            className={`bg-red-100 border-2 border-gray-800 aspect-square relative  ${isTeam ? 'cursor-move shadow-lg transform hover:scale-102 transition-transform' : ''}`}
             draggable={isTeam}
             onDragStart={isTeam ? (e) => {
                 e.dataTransfer.setData('text/plain', index!.toString())
@@ -103,29 +103,30 @@ export function PokemonTeamSelector({ profile, onTeamUpdate }: PokemonTeamSelect
                 handleReorderTeam(fromIndex, index!)
             } : undefined}
         >
-            <div className="aspect-square relative">
+            <div className="aspect-square relative bg-red-50 p-2">
+                <div className="absolute top-1 right-1 z-10 w-2 h-2 rounded-full bg-red-500 shadow-inner"></div>
                 <Image
                     src={"https://ukmcvfbydqejwaqkdjlj.supabase.co/storage/v1/object/public/pokemon-images/" + pokemon.imagePath}
                     alt={pokemon.stats.currentForm.name}
                     fill
-                    className="object-cover"
+                    className="object-contain p-2"
                 />
             </div>
-            <div className="p-2 bg-lime-100 border-t border-lime-500">
+            <div className="p-2 bg-red-600 border-t-2 border-gray-800">
                 <div className="flex justify-between items-center">
                     <div>
-                        <h4 className="font-bold text-sm text-black">
+                        <h4 className="font-bold text-sm text-white">
                             {pokemon.stats.currentForm.name}
                         </h4>
-                        <p className="text-xs text-gray-600">Lv. {pokemon.stats.currentForm.level}</p>
+                        <p className="text-xs text-red-100">Lv. {pokemon.stats.currentForm.level}</p>
                     </div>
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleToggleTeam(pokemon.id)}
                         className={profile.team.includes(pokemon.id)
-                            ? "bg-red-500 hover:bg-red-600 text-white border-red-700"
-                            : "bg-lime-500 hover:bg-lime-600 text-white border-lime-700"
+                            ? "bg-gray-800 hover:bg-gray-700 text-white border-2 border-gray-900 w-8 h-8 p-0"
+                            : "bg-white hover:bg-gray-100 text-gray-900 border-2 border-gray-800 w-8 h-8 p-0"
                         }
                     >
                         {profile.team.includes(pokemon.id) ? '-' : '+'}
@@ -138,19 +139,22 @@ export function PokemonTeamSelector({ profile, onTeamUpdate }: PokemonTeamSelect
     return (
         <div className="space-y-4">
             {/* Team Display */}
-            <div className="bg-lime-200 rounded border-2 border-lime-500 p-3">
-                <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-black font-bold uppercase">My Team</h3>
-                    <p className="text-sm text-gray-600">{team.length}/6 Pokémon</p>
+            <div className="bg-red-600 rounded-lg border-4 border-gray-800 p-4 shadow-lg">
+                <div className="flex justify-between items-center mb-3 border-b-2 border-gray-800 pb-2">
+                    <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-blue-400 border border-gray-800"></div>
+                        <h3 className="text-white font-bold uppercase tracking-wide">Active Team</h3>
+                    </div>
+                    <p className="text-sm text-red-100 bg-gray-800 px-2 py-1 rounded">{team.length}/6</p>
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {team.map((pokemon, index) => renderPokemonCard(pokemon, index, true))}
                     {[...Array(6 - team.length)].map((_, i) => (
                         <div
                             key={i}
-                            className="aspect-square bg-lime-100 rounded border-2 border-dashed border-lime-500 flex items-center justify-center"
+                            className="aspect-square bg-red-500 rounded border-2 border-dashed border-gray-800 flex items-center justify-center"
                         >
-                            <span className="text-lime-500">Empty Slot</span>
+                            <span className="text-red-100 text-sm">Empty</span>
                         </div>
                     ))}
                 </div>
@@ -160,41 +164,48 @@ export function PokemonTeamSelector({ profile, onTeamUpdate }: PokemonTeamSelect
             <div className="flex justify-center">
                 <Button
                     onClick={() => setIsAllPokemonOpen(true)}
-                    className="bg-lime-500 hover:bg-lime-600 text-white"
+                    className="bg-gray-800 hover:bg-gray-700 text-white border-2 border-gray-900 shadow-lg transform hover:scale-105 transition-transform"
                 >
-                    View All Pokemon
+                    Open Pokédex
                 </Button>
             </div>
 
             {/* All Pokemon Dialog */}
             <Dialog open={isAllPokemonOpen} onOpenChange={setIsAllPokemonOpen}>
-                <DialogContent className="max-w-3xl ">
-                    <DialogHeader>
-                        <DialogTitle className="text-yellow-900">All Pokémon</DialogTitle>
+                <DialogContent className="max-w-3xl bg-red-600 border-4 border-gray-800">
+                    <DialogHeader className="border-b-2 border-gray-800">
+                        <div className="flex items-center gap-2">
+                            <div className="flex gap-1">
+                                <div className="w-3 h-3 rounded-full bg-red-400 border border-gray-800"></div>
+                                <div className="w-3 h-3 rounded-full bg-yellow-400 border border-gray-800"></div>
+                                <div className="w-3 h-3 rounded-full bg-green-400 border border-gray-800"></div>
+                            </div>
+                            <DialogTitle className="text-white font-bold tracking-wide">POKÉDEX SYSTEM</DialogTitle>
+                        </div>
                     </DialogHeader>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto p-1">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto p-3 bg-red-500 rounded-lg border-2 border-gray-800">
                         {displayedPokemon.map(pokemon => renderPokemonCard(pokemon))}
                     </div>
                     {totalPages > 1 && (
-                        <div className="flex justify-center gap-2 mt-4">
+                        <div className="flex justify-center gap-2 mt-4 p-2 bg-gray-800 rounded-lg">
                             <Button
                                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                                 disabled={currentPage === 1}
                                 variant="outline"
-                                className="border-yellow-400 text-yellow-400 hover:bg-yellow-500 hover:text-black"
+                                className="border-2 border-gray-700 bg-red-600 hover:bg-red-500 text-white disabled:opacity-50"
                             >
-                                Previous
+                                ◀
                             </Button>
-                            <span className="py-2 text-yellow-400">
-                                Page {currentPage} of {totalPages}
+                            <span className="py-2 px-4 text-white bg-red-800 rounded border border-gray-700">
+                                {currentPage}/{totalPages}
                             </span>
                             <Button
                                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                                 disabled={currentPage === totalPages}
                                 variant="outline"
-                                className="border-yellow-400 text-yellow-400 hover:bg-yellow-500 hover:text-black"
+                                className="border-2 border-gray-700 bg-red-600 hover:bg-red-500 text-white disabled:opacity-50"
                             >
-                                Next
+                                ▶
                             </Button>
                         </div>
                     )}

@@ -135,12 +135,12 @@ export function TrainerProfile({ profile, onProfileUpdate }: TrainerProfileProps
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 px-4 py-6  mx-auto">
       {/* Avatar and Basic Info */}
-      <div className="flex flex-col items-center sm:flex-row sm:items-start gap-4 p-3 bg-lime-200 rounded border border-lime-500">
+      <div className="flex flex-col items-center gap-4 p-4 bg-red-600 rounded-lg border-4 border-red-700 shadow-lg">
         {/* Avatar */}
         <div className="relative w-32 h-32">
-          <div className="w-full h-full rounded-full overflow-hidden border-4 border-lime-500 bg-lime-50">
+          <div className="w-full h-full rounded-full overflow-hidden border-4 border-gray-800 bg-gray-900">
             {avatarUrl ? (
               <Image
                 src={avatarUrl}
@@ -149,7 +149,7 @@ export function TrainerProfile({ profile, onProfileUpdate }: TrainerProfileProps
                 className="object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-lime-100 text-lime-500">
+              <div className="w-full h-full flex items-center justify-center bg-gray-800 text-gray-400">
                 No Avatar
               </div>
             )}
@@ -158,7 +158,7 @@ export function TrainerProfile({ profile, onProfileUpdate }: TrainerProfileProps
             <>
               <Button
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-lime-500 hover:bg-lime-600 p-0"
+                className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 p-0 border-2 border-gray-600"
                 disabled={isLoading}
               >
                 +
@@ -175,38 +175,38 @@ export function TrainerProfile({ profile, onProfileUpdate }: TrainerProfileProps
         </div>
 
         {/* Basic Info and Stats */}
-        <div className="flex-1 space-y-4">
+        <div className="flex-1 w-full space-y-4">
           {isEditing ? (
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <form onSubmit={handleSubmit} className="space-y-3 bg-red-500 p-4 rounded-lg">
               <div>
-                <Label htmlFor="name">Trainer Name</Label>
+                <Label htmlFor="name" className="text-white">Trainer Name</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   required
-                  className="bg-lime-50 border-lime-500"
+                  className="bg-red-100 border-gray-800 focus:border-gray-900 focus:ring-gray-900"
                 />
               </div>
               
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="age">Age</Label>
+                  <Label htmlFor="age" className="text-white">Age</Label>
                   <Input
                     id="age"
                     type="number"
                     value={formData.age}
                     onChange={(e) => setFormData(prev => ({ ...prev, age: e.target.value }))}
-                    className="bg-lime-50 border-lime-500"
+                    className="bg-red-100 border-gray-800 focus:border-gray-900 focus:ring-gray-900"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="gender">Gender</Label>
+                  <Label htmlFor="gender" className="text-white">Gender</Label>
                   <select
                     id="gender"
                     value={formData.gender}
                     onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value as 'male' | 'female' | 'other' }))}
-                    className="w-full h-9 rounded-md border bg-lime-50 border-lime-500 px-3"
+                    className="w-full h-9 rounded-md border bg-red-100 border-gray-800 px-3 focus:border-gray-900 focus:ring-gray-900"
                   >
                     <option value="male">Male</option>
                     <option value="female">Female</option>
@@ -216,19 +216,19 @@ export function TrainerProfile({ profile, onProfileUpdate }: TrainerProfileProps
               </div>
 
               <div>
-                <Label htmlFor="region">Home Region</Label>
+                <Label htmlFor="region" className="text-white">Home Region</Label>
                 <Input
                   id="region"
                   value={formData.region}
                   onChange={(e) => setFormData(prev => ({ ...prev, region: e.target.value }))}
-                  className="bg-lime-50 border-lime-500"
+                  className="bg-red-100 border-gray-800 focus:border-gray-900 focus:ring-gray-900"
                 />
               </div>
 
               <div className="flex gap-2 pt-2">
                 <Button
                   type="submit"
-                  className="flex-1 bg-lime-500 hover:bg-lime-600 text-white"
+                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-white border-2 border-gray-700"
                   disabled={isLoading}
                 >
                   {isLoading ? 'Saving...' : 'Save Profile'}
@@ -238,7 +238,7 @@ export function TrainerProfile({ profile, onProfileUpdate }: TrainerProfileProps
                     type="button"
                     onClick={() => setIsEditing(false)}
                     variant="outline"
-                    className="bg-gray-200 hover:bg-gray-300"
+                    className="bg-red-500 hover:bg-red-400 text-white border-2 border-gray-700"
                   >
                     Cancel
                   </Button>
@@ -247,9 +247,9 @@ export function TrainerProfile({ profile, onProfileUpdate }: TrainerProfileProps
             </form>
           ) : (
             <>
-              <div className="space-y-2">
-                <h2 className="text-xl font-bold text-black">{profile?.name}</h2>
-                <div className="text-sm text-gray-700 space-y-1">
+              <div className="space-y-2 bg-red-500 p-4 rounded-lg text-white">
+                <h2 className="text-xl font-bold border-b-2 border-gray-800 pb-2">{profile?.name}</h2>
+                <div className="text-sm space-y-1">
                   <p>Age: {profile?.age || 'Not specified'}</p>
                   <p>Gender: {profile?.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : 'Not specified'}</p>
                   <p>Region: {profile?.region || 'Not specified'}</p>
@@ -257,7 +257,7 @@ export function TrainerProfile({ profile, onProfileUpdate }: TrainerProfileProps
                 <Button
                   onClick={() => setIsEditing(true)}
                   variant="outline"
-                  className="mt-2 bg-lime-500 hover:bg-lime-600 text-white"
+                  className="mt-2 bg-gray-800 hover:bg-gray-700 text-white border-2 border-gray-700"
                 >
                   Edit Profile
                 </Button>
@@ -265,24 +265,24 @@ export function TrainerProfile({ profile, onProfileUpdate }: TrainerProfileProps
 
               {/* Trainer Stats */}
               {profile?.stats && (
-                <div className="bg-lime-100 rounded border border-lime-500 p-3 mt-4">
-                  <h3 className="font-bold text-black mb-2 uppercase tracking-wide text-sm">Trainer Stats</h3>
+                <div className="bg-red-500 rounded-lg border-2 border-gray-800 p-4 mt-4">
+                  <h3 className="font-bold text-white mb-3 uppercase tracking-wide text-sm border-b-2 border-gray-800 pb-2">Trainer Stats</h3>
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="bg-lime-50 p-2 rounded border border-lime-300">
-                      <p className="text-gray-600 text-xs uppercase">Pokemon Caught</p>
-                      <p className="font-bold text-black">{profile.stats.totalPokemonCaught}</p>
+                    <div className="bg-red-400 p-3 rounded-lg border-2 border-gray-800">
+                      <p className="text-white text-xs uppercase">Pokemon Caught</p>
+                      <p className="font-bold text-white text-lg">{profile.stats.totalPokemonCaught}</p>
                     </div>
-                    <div className="bg-lime-50 p-2 rounded border border-lime-300">
-                      <p className="text-gray-600 text-xs uppercase">Unique Types</p>
-                      <p className="font-bold text-black">{profile.stats.uniquePokemonTypes}</p>
+                    <div className="bg-red-400 p-3 rounded-lg border-2 border-gray-800">
+                      <p className="text-white text-xs uppercase">Unique Types</p>
+                      <p className="font-bold text-white text-lg">{profile.stats.uniquePokemonTypes}</p>
                     </div>
-                    <div className="bg-lime-50 p-2 rounded border border-lime-300">
-                      <p className="text-gray-600 text-xs uppercase">Highest Level</p>
-                      <p className="font-bold text-black">{profile.stats.highestLevelPokemon}</p>
+                    <div className="bg-red-400 p-3 rounded-lg border-2 border-gray-800">
+                      <p className="text-white text-xs uppercase">Highest Level</p>
+                      <p className="font-bold text-white text-lg">{profile.stats.highestLevelPokemon}</p>
                     </div>
-                    <div className="bg-lime-50 p-2 rounded border border-lime-300">
-                      <p className="text-gray-600 text-xs uppercase">Favorite Type</p>
-                      <p className="font-bold text-black capitalize">{profile.stats.favoritePokemonType || 'None'}</p>
+                    <div className="bg-red-400 p-3 rounded-lg border-2 border-gray-800">
+                      <p className="text-white text-xs uppercase">Favorite Type</p>
+                      <p className="font-bold text-white text-lg capitalize">{profile.stats.favoritePokemonType || 'None'}</p>
                     </div>
                   </div>
                 </div>
