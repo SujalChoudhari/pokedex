@@ -333,9 +333,9 @@ export function PokemonViewer({
                                     <div className="space-y-4">
                                         <div className="relative">
                                             {/* Evolution Chain Visualization */}
-                                            <div className="flex items-center justify-between relative">
+                                            <div className="flex flex-col items-center gap-6">
                                                 {/* Current Form */}
-                                                <div className="text-center flex-1">
+                                                <div className="text-center">
                                                     <div className="bg-gray-700 rounded-lg p-2 mb-2">
                                                         <p className="font-bold">{stats.evolutionChain.current.name}</p>
                                                         <p className="text-xs text-gray-400">Current Form</p>
@@ -343,16 +343,15 @@ export function PokemonViewer({
                                                 </div>
 
                                                 {/* Arrow */}
-                                                <div className="flex-1 px-2">
-                                                    <div className="h-0.5 bg-red-500 relative">
-                                                        <div className="absolute -top-3 right-0 text-xs">
-                                                            Lv.{stats.evolutionChain.nextEvolution.evolutionLevel}
-                                                        </div>
+                                                <div className="relative">
+                                                    <div className="w-0.5 h-12 bg-red-500 mx-auto"></div>
+                                                    <div className="absolute -right-6 top-1/2 transform -translate-y-1/2 text-xs">
+                                                        Lv.{stats.evolutionChain.nextEvolution.evolutionLevel}
                                                     </div>
                                                 </div>
 
                                                 {/* Next Evolution */}
-                                                <div className="text-center flex-1">
+                                                <div className="text-center">
                                                     <div className="bg-gray-700 rounded-lg p-2 mb-2">
                                                         <p className="font-bold">{stats.evolutionChain.nextEvolution.name}</p>
                                                         <p className="text-xs text-gray-400">Next Form</p>
@@ -360,16 +359,15 @@ export function PokemonViewer({
                                                 </div>
 
                                                 {/* Arrow */}
-                                                <div className="flex-1 px-2">
-                                                    <div className="h-0.5 bg-red-500 relative">
-                                                        <div className="absolute -top-3 right-0 text-xs">
-                                                            Lv.{stats.evolutionChain.finalEvolution.evolutionLevel}
-                                                        </div>
+                                                <div className="relative">
+                                                    <div className="w-0.5 h-12 bg-red-500 mx-auto"></div>
+                                                    <div className="absolute -right-6 top-1/2 transform -translate-y-1/2 text-xs">
+                                                        Lv.{stats.evolutionChain.finalEvolution.evolutionLevel}
                                                     </div>
                                                 </div>
 
                                                 {/* Final Evolution */}
-                                                <div className="text-center flex-1">
+                                                <div className="text-center">
                                                     <div className="bg-gray-700 rounded-lg p-2">
                                                         <p className="font-bold">{stats.evolutionChain.finalEvolution.name}</p>
                                                         <p className="text-xs text-gray-400">Final Form</p>
