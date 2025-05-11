@@ -24,7 +24,7 @@ export function PokemonViewer({
     open,
     onOpenChange,
     pokemonId,
-    onPokemonRelease
+    onPokemonRelease,
 }: PokemonViewerProps) {
     const [imageUrl, setImageUrl] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(true)
@@ -172,8 +172,6 @@ export function PokemonViewer({
                                     {type}
                                 </span>
                             ))}
-
-
                         </div>
                         <div className='mt-4'>
                             <h3 className="text-sm font-bold mb-2 text-gray-400 uppercase">Abilities</h3>
@@ -184,6 +182,10 @@ export function PokemonViewer({
                                     </div>
                                 ))}
                             </div>
+                        </div>
+                        <div className="flex justify-between mt-2 text-sm">
+                            <div>Height: {stats.height ? stats.height : "0 in" }</div>
+                            <div>Weight: {stats.weight ? stats.weight : "0 lbs" }</div>
                         </div>
                     </div>
 

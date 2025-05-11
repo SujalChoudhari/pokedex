@@ -1,11 +1,12 @@
-
 create table public.captured_pokemon (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users(id) not null,
   image_path text not null,
   stats jsonb not null,
   captured_at timestamp with time zone default now(),
-  created_at timestamp with time zone default now()
+  created_at timestamp with time zone default now(),
+  height text default '0',
+  weight text default '0'
 );
 
 -- Set up RLS (Row Level Security)

@@ -91,7 +91,9 @@ Based on your analysis, create a JSON object with the following structure:
       "moves": string[],
       "description": string
     }
-  }
+  },
+  "height": string,
+  "weight": string
 }
 
 Follow these guidelines when creating your Pokémon:
@@ -105,6 +107,7 @@ Follow these guidelines when creating your Pokémon:
 7. Assign stats between 1-100, reflecting the object's characteristics.
 8. Consider the object's material, purpose, and features when assigning types.
 9. Use standard Pokémon types but be creative with combinations.
+10. Provide a height and weight for the Pokemon, be creative.
 
 
 Remember to be creative and thorough in your analysis, ensuring that your Pokémon creation is both imaginative and consistent with the Pokémon universe.

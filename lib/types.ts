@@ -41,6 +41,8 @@ export interface EvolutionChain {
 export interface PokemonStats {
   currentForm: CurrentForm
   evolutionChain: EvolutionChain
+  height: string
+  weight: string
 }
 
 export interface CapturedPokemon {
@@ -50,6 +52,7 @@ export interface CapturedPokemon {
   stats: PokemonStats
   captured_at: string
   created_at: string
+
 }
 
 export type Database = {

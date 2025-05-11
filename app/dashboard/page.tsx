@@ -16,6 +16,8 @@ interface CapturedPokemonData {
     stats: PokemonStats
     imagePath: string
     user_id?: string
+    height: string
+    weight: string
 }
 
 export default function DashboardPage() {
@@ -39,7 +41,7 @@ export default function DashboardPage() {
 
             const { data, error } = await supabase
                 .from('captured_pokemon')
-                .select('id, stats, image_path, user_id')
+                .select('id, stats, image_path, user_id, height, weight')
                 .eq('user_id', userId)
                 .order('captured_at', { ascending: false })
 
@@ -50,7 +52,9 @@ export default function DashboardPage() {
                     id: p.id,
                     stats: p.stats,
                     imagePath: p.image_path,
-                    user_id: p.user_id
+                    user_id: p.user_id,
+                    height: p.height,
+                    weight: p.weight
                 })))
             }
         } catch (err) {
