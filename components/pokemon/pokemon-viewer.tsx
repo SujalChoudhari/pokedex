@@ -364,14 +364,14 @@ export function PokemonViewer({
                                                 <div className="relative">
                                                     <div className="w-0.5 h-12 bg-red-500 mx-auto"></div>
                                                     <div className="absolute -right-6 top-1/2 transform -translate-y-1/2 text-xs">
-                                                        Lv.{stats.evolutionChain.finalEvolution.evolutionLevel}
+                                                        Lv.{stats.evolutionChain.finalEvolution!.evolutionLevel}
                                                     </div>
                                                 </div>
 
                                                 {/* Final Evolution */}
                                                 <div className="text-center">
                                                     <div className="bg-gray-700 rounded-lg p-2">
-                                                        <p className="font-bold">{stats.evolutionChain.finalEvolution.name}</p>
+                                                        <p className="font-bold">{stats.evolutionChain.finalEvolution!.name}</p>
                                                         <p className="text-xs text-gray-400">Final Form</p>
                                                     </div>
                                                 </div>
@@ -381,7 +381,7 @@ export function PokemonViewer({
                                             <div className="mt-4 space-y-3">
                                                 <div className="bg-gray-700 rounded-lg p-3">
                                                     <h4 className="font-bold mb-1 text-sm">Next Evolution Details</h4>
-                                                    <p className="text-sm text-gray-300">{stats.evolutionChain.nextEvolution.description}</p>
+                                                    <p className="text-sm text-gray-300">{stats.evolutionChain.nextEvolution!.description}</p>
                                                     <div className="mt-2">
                                                         <h5 className="text-xs font-bold text-gray-400 mb-1">Learns:</h5>
                                                         <div className="flex flex-wrap gap-1">

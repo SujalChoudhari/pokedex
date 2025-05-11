@@ -10,7 +10,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-500 to-red-600 p-4">
-      <div className="max-w-md mx-auto pt-12">
+      <main className="container mx-auto px-4 py-8 max-w-md">
         {/* Pokédex Frame */}
         <div className="bg-red-600 rounded-lg border-4 border-gray-800 p-6 shadow-2xl relative overflow-hidden">
           {/* Top LED Lights */}
@@ -92,7 +92,7 @@ export default function Home() {
         <div className="text-center mt-6 text-white/80 text-sm">
           <p>Kanto Region Edition • v2.0.25</p>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
