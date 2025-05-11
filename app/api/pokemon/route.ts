@@ -36,63 +36,79 @@ async function analyzePokemonImage(imageBase64: string) {
   ];
 
   const prompt = `
-Analyze this image as if it's a Pokemon. 
-Be creative and consider real-world object characteristics to transform into Pokemon features. 
-Identify the center of attraction of the image, thats our pokemon, use the age, gender, build to 
-guess their stats and use the environment to guess their type and abilities.
-Items can me humans or animals and nonliving things, so make sure you escalate their 
-abilities and make them look like pokemon from kanto region.
-Return a JSON object with the following structure exactly:
-  {
-    "currentForm": {
-      "name": string,
-      "types": string[],
-      "level": number,
-      "description": string,
-      "baseStats": {
-        "hp": number,
-        "attack": number,
-        "defense": number,
-        "specialAttack": number,
-        "specialDefense": number,
-        "speed": number
-      },
-      "abilities": string[],
-      "moves": string[],
-      "colorScheme": string[]
+You are an AI assistant tasked with analyzing images and creatively transforming them into Pokémon-like creatures. Your goal is to examine the provided image and generate a detailed description of a Pokémon based on the image's contents, following the style and conventions of the Pokémon universe.
+
+Here is the image you will analyze:
+
+<image>
+{{IMAGE}}
+</image>
+
+Follow these steps to analyze the image and create a Pokémon-inspired description:
+
+1. Identify the central object or focus of the image. This will be the basis for your Pokémon.
+2. Consider the object's characteristics (extrapolated), including its appearance, purpose, material, and environment.
+3. Use your creativity to transform these real-world characteristics into Pokémon features, abilities, and types.
+4. Develop a complete Pokémon profile, including its current form and potential evolutions.
+5. If you see a human, use their expression to assign their types
+
+Based on your analysis, create a JSON object with the following structure:
+
+{
+  "currentForm": {
+    "name": string,
+    "types": string[],
+    "level": number,
+    "description": string,
+    "baseStats": {
+      "hp": number,
+      "attack": number,
+      "defense": number,
+      "specialAttack": number,
+      "specialDefense": number,
+      "speed": number
     },
-    "evolutionChain": {
-      "current": {
-        "name": string,
-        "level": number,
-        "moves": string[],
-        "description": string
-      },
-      "nextEvolution": {
-        "name": string,
-        "evolutionLevel": number,
-        "moves": string[],
-        "description": string
-      },
-      "finalEvolution": {
-        "name": string,
-        "evolutionLevel": number,
-        "moves": string[],
-        "description": string
-      }
+    "abilities": string[],
+    "moves": string[],
+    "colorScheme": string[]
+  },
+  "evolutionChain": {
+    "current": {
+      "name": string,
+      "level": number,
+      "moves": string[],
+      "description": string
+    },
+    "nextEvolution": {
+      "name": string,
+      "evolutionLevel": number,
+      "moves": string[],
+      "description": string
+    },
+    "finalEvolution": {
+      "name": string,
+      "evolutionLevel": number,
+      "moves": string[],
+      "description": string
     }
   }
+}
 
-  Guidelines:
-  - Base level on the estimated age/complexity of the object (1-65)
-  - Each form should have exactly 4 unique moves
-  - Use varied and creative type combinations (don't just use Normal type)
-  - Names should follow Pokemon naming conventions (creative, catchy, related to object's features)
-  - Descriptions should be Pokedex-style entries explaining origin and behavior
-  - Evolution names should share some linguistic elements with the base form
-  - Stats should be between 1-100 and reflect the object's characteristics
-  - Consider object's material, purpose, and features when assigning types
-  - Use standard Pokemon types but be creative with combinations`;
+Follow these guidelines when creating your Pokémon:
+
+1. Base the level on the estimated age/complexity of the object (range: 1-65).
+2. Assign exactly 4 unique moves to each form.
+3. Use varied and creative type combinations, avoiding overuse of the Normal type.
+4. Create names that follow Pokémon naming conventions: creative, catchy, and related to the object's features.
+5. Write descriptions in the style of Pokédex entries, explaining the Pokémon's origin and behavior.
+6. Ensure evolution names share some linguistic elements with the base form.
+7. Assign stats between 1-100, reflecting the object's characteristics.
+8. Consider the object's material, purpose, and features when assigning types.
+9. Use standard Pokémon types but be creative with combinations.
+
+
+Remember to be creative and thorough in your analysis, ensuring that your Pokémon creation is both imaginative and consistent with the Pokémon universe.
+  `;
 
   const parts = [
     {
