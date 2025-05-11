@@ -50,7 +50,7 @@ Follow these steps to analyze the image and create a Pokémon-inspired descripti
 2. Consider the object's characteristics (extrapolated), including its appearance, purpose, material, and environment.
 3. Use your creativity to transform these real-world characteristics into Pokémon features, abilities, and types.
 4. Develop a complete Pokémon profile, including its current form and potential evolutions.
-5. If you see a human, use their expression to assign their types
+5. If you see a human, use their expression to assign their types, anger is fire, etc. etc.
 
 Based on your analysis, create a JSON object with the following structure:
 
