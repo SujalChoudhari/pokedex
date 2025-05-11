@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabase"
+import { CameraCapture } from "@/components/pokemon/camera-capture"
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -21,7 +22,7 @@ export default function DashboardPage() {
         </Button>
       </div>
       <div className="grid gap-6">
-        <p className="text-lg">Welcome to your Pokedex! Content coming soon...</p>
+        <CameraCapture />
       </div>
     </div>
   )
