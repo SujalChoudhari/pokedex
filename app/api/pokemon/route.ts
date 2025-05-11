@@ -35,7 +35,14 @@ async function analyzePokemonImage(imageBase64: string) {
     },
   ];
 
-  const prompt = `Analyze this image as if it's a Pokemon. Be creative and consider real-world object characteristics to transform into Pokemon features. Return a JSON object with the following structure exactly:
+  const prompt = `
+Analyze this image as if it's a Pokemon. 
+Be creative and consider real-world object characteristics to transform into Pokemon features. 
+Identify the center of attraction of the image, thats our pokemon, use the age, gender, build to 
+guess their stats and use the environment to guess their type and abilities.
+Items can me humans or animals and nonliving things, so make sure you escalate their 
+abilities and make them look like pokemon from kanto region.
+Return a JSON object with the following structure exactly:
   {
     "currentForm": {
       "name": string,
