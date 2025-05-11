@@ -397,7 +397,6 @@ export function BattleArena({
     type?: string;
   }>({ isAnimating: false, attacker: 'player' });
 
-  const [showTeamSelect, setShowTeamSelect] = useState(false);
 
   function calculateMaxHP(baseHP: number): number {
     return Math.floor((2 * baseHP * 50) / 100 + 50 + 10);
@@ -449,7 +448,6 @@ export function BattleArena({
     });
 
     onPokemonSwap?.(newPokemon);
-    setShowTeamSelect(false);
   };
 
   // Modified handleWildPokemonTurn to accept current state
@@ -593,9 +591,9 @@ export function BattleArena({
   return (
     <div className="w-full h-full bg-gradient-to-b from-gray-800 to-gray-900 p-4 font-mono text-white">
       {/* Battle Arena */}
-      <div className="relative w-full h-[70vh] bg-gradient-to-b from-gray-700 to-gray-800 rounded-lg border-4 border-gray-600 overflow-hidden">
+      <div className="relative w-full h-[55vh] bg-gradient-to-b from-gray-700 to-gray-800 rounded-lg border-4 border-gray-600 overflow-hidden">
         {/* Wild Pokemon */}
-        <div className="absolute top-16 right-4 w-48 h-48">
+        <div className="absolute top-10 right-4 w-48 h-48">
           <motion.div
             className="relative w-full h-full"
             animate={{
@@ -764,7 +762,7 @@ export function BattleArena({
                     pokemon.fainted
                   }
                   className={`
-                    relative flex flex-col items-center p-2 rounded-lg min-w-[120px]
+                    relative flex flex-col items-center p-2 rounded-lg min-w-[80px]
                     ${pokemon.stats === battleState.playerPokemon.stats 
                       ? 'bg-blue-600 border-2 border-blue-400' 
                       : pokemon.fainted
@@ -775,7 +773,7 @@ export function BattleArena({
                       : 'cursor-pointer transform hover:scale-105 transition-transform'}
                   `}
                 >
-                  <div className="w-20 h-20 rounded-full bg-gray-900 overflow-hidden border-2 border-gray-600">
+                  <div className="w-10 h-10 rounded-full bg-gray-900 overflow-hidden border-2 border-gray-600">
                     {pokemon.stats.image_path ? (
                       <img
                         src={`https://ukmcvfbydqejwaqkdjlj.supabase.co/storage/v1/object/public/pokemon-images/${pokemon.stats.image_path}`}
@@ -810,7 +808,7 @@ export function BattleArena({
         )}
 
         {/* Battle Log */}
-        <div className="bg-gray-700 rounded-lg p-2 h-24 overflow-y-auto">
+        <div className="bg-gray-700 rounded-lg p-2 h-20 overflow-y-auto">
             {battleState.battleLog.map((log, index) => (
                 <motion.p
                     key={index}
@@ -818,13 +816,13 @@ export function BattleArena({
                     animate={{ opacity: 1, y: 0 }}
                     className="text-sm mb-1"
                 >
-                    {log}
+                    {">"} {log}
                 </motion.p>
             ))}
         </div>
 
         {/* Moves and Actions */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid  gap-4">
             <div className="grid grid-cols-2 gap-2">
                 {battleState.playerPokemon.stats.currentForm.moves.slice(0, 4).map((move) => {
                     // Get move type from the move name (you might want to update this with actual move types)
@@ -837,33 +835,28 @@ export function BattleArena({
                     
                     if (effectiveness >= 2) {
                         effectivenessLabel = 'Super Effective';
-                        effectivenessColor = 'bg-green-500 hover:bg-green-600';
+                        effectivenessColor = 'bg-gray-100 hover:bg-gray-200 border-2 border-green-500';
                     } else if (effectiveness > 1) {
                         effectivenessLabel = 'Effective';
-                        effectivenessColor = 'bg-blue-500 hover:bg-blue-600';
+                        effectivenessColor = 'bg-gray-100 hover:bg-gray-200 border-2 border-blue-500';
                     } else if (effectiveness === 0) {
                         effectivenessLabel = 'No Effect';
-                        effectivenessColor = 'bg-gray-500 hover:bg-gray-600';
+                        effectivenessColor = 'bg-gray-100 hover:bg-gray-200 border-2 border-gray-500';
                     } else if (effectiveness < 1) {
                         effectivenessLabel = 'Not Very Effective';
-                        effectivenessColor = 'bg-red-500 hover:bg-red-600';
+                        effectivenessColor = 'bg-gray-100 hover:bg-gray-200 border-2 border-red-500';
                     }
 
                     return (
                         <Button
                             key={move}
+                            title={effectivenessLabel}
                             onClick={() => handleMove(move)}
                             disabled={!battleState.isPlayerTurn || battleState.battleStatus !== 'ongoing' || attackAnimation.isAnimating}
-                            className={`relative font-bold py-2 px-4 rounded ${effectivenessColor} text-white`}
+                            className={`relative font-bold py-2 px-4 rounded ${effectivenessColor} text-black`}
                         >
                             {move}
-                            {effectiveness !== 1 && (
-                                <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
-                                    <span className="text-xs px-1.5 py-0.5 rounded-full bg-white text-black font-normal">
-                                        {effectivenessLabel}
-                                    </span>
-                                </div>
-                            )}
+                            
                         </Button>
                     );
                 })}
@@ -878,52 +871,12 @@ export function BattleArena({
                     Flee
                 </Button>
 
-                <Button
-                    onClick={()=>{setShowTeamSelect(true)}}
-                    disabled={!battleState.canFlee || battleState.battleStatus !== 'ongoing' || attackAnimation.isAnimating}
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
-                >
-                    Change
-                </Button>
             </div>
+           
         </div>
       </div>
 
-      {/* Pokemon Team Selection Modal */}
-      {showTeamSelect && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 p-4 rounded-lg max-w-md w-full">
-            <h3 className="text-lg font-bold mb-4">Choose Pokemon</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {playerTeam.map((pokemon, index) => (
-                <Button
-                  key={index}
-                  onClick={() => handleSwap(pokemon)}
-                  disabled={pokemon === battleState.playerPokemon.stats}
-                  className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
-                >
-                  {pokemon.image_path ? (
-                    <img
-                      src={`https://ukmcvfbydqejwaqkdjlj.supabase.co/storage/v1/object/public/pokemon-images/${pokemon.image_path}`}
-                      alt={pokemon.currentForm.name}
-                      className="w-8 h-8 object-contain"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 flex items-center justify-center bg-gray-700 rounded">🎮</div>
-                  )}
-                  {pokemon.currentForm.name}
-                </Button>
-              ))}
-            </div>
-            <Button
-              onClick={() => setShowTeamSelect(false)}
-              className="mt-4 w-full bg-gray-600 hover:bg-gray-700"
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 } 
