@@ -118,7 +118,7 @@ export function PokemonViewer({
             rock: 'bg-stone-500',
             ghost: 'bg-violet-600',
             dragon: 'bg-violet-500',
-            dark: 'bg-gray-800',
+            dark: 'bg-gray-950',
             steel: 'bg-slate-400',
             fairy: 'bg-pink-400',
             normal: 'bg-gray-400'
@@ -144,7 +144,7 @@ export function PokemonViewer({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-b from-red-600 to-red-700 border-4 border-gray-800 p-0">
                 {/* Top Bar with LED Lights */}
-                <motion.div 
+                <motion.div
                     className="flex items-center justify-between p-4 border-b-4 border-gray-800"
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -162,20 +162,20 @@ export function PokemonViewer({
 
                 <div className="p-4 space-y-4">
                     {/* Pokemon Info Header */}
-                    <motion.div 
+                    <motion.div
                         className="bg-gray-800 rounded-lg p-4 text-white"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                     >
                         <div className="flex justify-between items-start mb-3">
-                            <motion.h2 
+                            <motion.h2
                                 className="text-2xl font-bold uppercase"
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                             >
                                 {stats.currentForm.name}
                             </motion.h2>
-                            <motion.p 
+                            <motion.p
                                 className="text-sm bg-red-500 px-3 py-1 rounded-full"
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
@@ -183,7 +183,7 @@ export function PokemonViewer({
                                 Lv.{stats.currentForm.level}
                             </motion.p>
                         </div>
-                        <motion.div 
+                        <motion.div
                             className="flex gap-2"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -200,13 +200,29 @@ export function PokemonViewer({
                                     {type}
                                 </motion.span>
                             ))}
+
                         </motion.div>
+                        {stats.height && stats.weight && (
+                            <motion.div
+                                className="flex justify-between mt-4 gap-4 text-sm"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                            >
+                                <div>
+                                    <span className="font-bold">Height:</span> {stats.height}
+                                </div>
+                                <div>
+                                    <span className="font-bold">Weight:</span> {stats.weight}
+                                </div>
+                            </motion.div>
+                        )}
                     </motion.div>
 
                     {/* Main Content Grid */}
                     <div className="grid md:grid-cols-2 gap-4">
                         {/* Left Column - Image and Description */}
-                        <motion.div 
+                        <motion.div
                             className="bg-gray-800 rounded-lg overflow-hidden"
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -237,7 +253,7 @@ export function PokemonViewer({
                                     </div>
                                 )}
                             </div>
-                            <motion.div 
+                            <motion.div
                                 className="p-4 text-white"
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -248,7 +264,7 @@ export function PokemonViewer({
                         </motion.div>
 
                         {/* Right Column - Tabs */}
-                        <motion.div 
+                        <motion.div
                             className="bg-gray-800 rounded-lg overflow-hidden"
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}

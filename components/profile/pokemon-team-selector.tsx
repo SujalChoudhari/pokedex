@@ -4,37 +4,24 @@ import { PokemonCard } from '@/components/pokemon/pokemon-card'
 import { PokemonViewer } from '@/components/pokemon/pokemon-viewer'
 import { Loader } from '@/components/ui/loader'
 import { supabase } from '@/lib/supabase'
-import type { TrainerProfile } from '@/lib/trainer-types'
-import { DragDropContext, Draggable, Droppable } from '@hello-pangea/dnd'
+import type { CapturedPokemon, TrainerProfile } from '@/lib/trainer-types'
 import { AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { Plus, Minus, ArrowUp, ArrowDown, Archive } from 'lucide-react'
 
-interface Pokemon {
-    id: string
-    stats: any
-    imagePath: string
-}
 
 interface PokemonTeamSelectorProps {
     profile: TrainerProfile
     onTeamUpdate: (newTeam: string[]) => void
 }
 
-// Custom wrapper component to handle motion + drag conflicts
-const DraggableItem = ({ children, ...props }: any) => {
-    return (
-        <div {...props}>
-            {children}
-        </div>
-    )
-}
-
 export function PokemonTeamSelector({ profile, onTeamUpdate }: PokemonTeamSelectorProps) {
-    const [allPokemon, setAllPokemon] = useState<Pokemon[]>([])
-    const [teamPokemon, setTeamPokemon] = useState<Pokemon[]>([])
+    const [allPokemon, setAllPokemon] = useState<CapturedPokemon[]>([])
+    const [teamPokemon, setTeamPokemon] = useState<CapturedPokemon[]>([])
     const [loading, setLoading] = useState(true)
-    const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null)
+    const [selectedPokemon, setSelectedPokemon] = useState<CapturedPokemon | null>(null)
     const [viewerOpen, setViewerOpen] = useState(false)
     const [saving, setSaving] = useState(false)
 
@@ -53,52 +40,9 @@ export function PokemonTeamSelector({ profile, onTeamUpdate }: PokemonTeamSelect
         }
     }, [profile])
 
-    const handleDragEnd = async (result: any) => {
-        if (!result.destination) return
-
-        const { source, destination } = result
-
-        // Same list
-        if (source.droppableId === destination.droppableId) {
-            if (source.droppableId === 'team') {
-                const newTeam = Array.from(teamPokemon)
-                const [removed] = newTeam.splice(source.index, 1)
-                newTeam.splice(destination.index, 0, removed)
-                setTeamPokemon(newTeam)
-            } else {
-                const newAll = Array.from(allPokemon)
-                const [removed] = newAll.splice(source.index, 1)
-                newAll.splice(destination.index, 0, removed)
-                setAllPokemon(newAll)
-            }
-        }
-        // Different lists
-        else {
-            const sourceList = source.droppableId === 'team' ? teamPokemon : allPokemon
-            const destList = destination.droppableId === 'team' ? teamPokemon : allPokemon
-
-            // Check team size limit
-            if (destination.droppableId === 'team' && teamPokemon.length >= 6) {
-                toast.error('Team can only have 6 Pokemon')
-                return
-            }
-
-            const [removed] = sourceList.splice(source.index, 1)
-            destList.splice(destination.index, 0, removed)
-
-            if (source.droppableId === 'team') {
-                setTeamPokemon(sourceList)
-                setAllPokemon(destList)
-            } else {
-                setTeamPokemon(destList)
-                setAllPokemon(sourceList)
-            }
-        }
-
-        // Save team changes
+    const updateTeamInDatabase = async (newTeamIds: string[]) => {
         try {
             setSaving(true)
-            const newTeamIds = teamPokemon.map(p => p.id)
 
             // Update local state through callback
             onTeamUpdate(newTeamIds)
@@ -110,12 +54,60 @@ export function PokemonTeamSelector({ profile, onTeamUpdate }: PokemonTeamSelect
                 .eq('user_id', profile.user_id)
 
             if (error) throw error
+            toast.success('Team updated successfully')
         } catch (error) {
             console.error('Error saving team:', error)
             toast.error('Failed to save team changes')
         } finally {
             setSaving(false)
         }
+    }
+
+    const handleAddToTeam = (pokemon: CapturedPokemon) => {
+        if (teamPokemon.length >= 6) {
+            toast.error('Team can only have 6 Pokemon')
+            return
+        }
+
+        const newTeam = [...teamPokemon, pokemon]
+        const newAll = allPokemon.filter(p => p.id !== pokemon.id)
+
+        setTeamPokemon(newTeam)
+        setAllPokemon(newAll)
+        updateTeamInDatabase(newTeam.map(p => p.id))
+    }
+
+    const handleRemoveFromTeam = (pokemon: CapturedPokemon) => {
+        const newTeam = teamPokemon.filter(p => p.id !== pokemon.id)
+        const newAll = [...allPokemon, pokemon]
+
+        setTeamPokemon(newTeam)
+        setAllPokemon(newAll)
+        updateTeamInDatabase(newTeam.map(p => p.id))
+    }
+
+    const handleMoveUp = (index: number) => {
+        if (index <= 0) return
+
+        const newTeam = [...teamPokemon]
+        const temp = newTeam[index]
+        newTeam[index] = newTeam[index - 1]
+        newTeam[index - 1] = temp
+
+        setTeamPokemon(newTeam)
+        updateTeamInDatabase(newTeam.map(p => p.id))
+    }
+
+    const handleMoveDown = (index: number) => {
+        if (index >= teamPokemon.length - 1) return
+
+        const newTeam = [...teamPokemon]
+        const temp = newTeam[index]
+        newTeam[index] = newTeam[index + 1]
+        newTeam[index + 1] = temp
+
+        setTeamPokemon(newTeam)
+        updateTeamInDatabase(newTeam.map(p => p.id))
     }
 
     if (loading) {
@@ -142,108 +134,103 @@ export function PokemonTeamSelector({ profile, onTeamUpdate }: PokemonTeamSelect
                     )}
                 </div>
 
-                <DragDropContext onDragEnd={handleDragEnd}>
-                    <Droppable droppableId="team" direction="horizontal">
-                        {(provided) => (
+                <div className="grid grid-cols-2 sm:grid-cols-6 gap-4">
+                    <AnimatePresence>
+                        {teamPokemon.map((pokemon, index) => (
                             <div
-                                ref={provided.innerRef}
-                                {...provided.droppableProps}
-                                className="grid grid-cols-2 sm:grid-cols-6 gap-4"
+                                key={pokemon.id}
+                                className="relative"
                             >
-                                <AnimatePresence>
-                                    {teamPokemon.map((pokemon, index) => (
-                                        <Draggable
-                                            key={pokemon.id}
-                                            draggableId={pokemon.id}
-                                            index={index}
-                                        >
-                                            {(provided, snapshot) => (
-                                                <DraggableItem
-                                                    ref={provided.innerRef}
-                                                    {...provided.draggableProps}
-                                                    {...provided.dragHandleProps}
-                                                    className={`
-                                                        aspect-square relative cursor-move
-                                                        ${snapshot.isDragging ? 'z-50' : 'z-0'}
-                                                    `}
-                                                    onClick={() => {
-                                                        setSelectedPokemon(pokemon)
-                                                        setViewerOpen(true)
-                                                    }}
-                                                >
-                                                    <PokemonCard
-                                                        stats={pokemon.stats}
-                                                        imagePath={pokemon.imagePath}
-                                                    />
-                                                </DraggableItem>
-                                            )}
-                                        </Draggable>
-                                    ))}
-                                    {provided.placeholder}
-                                </AnimatePresence>
-
-                                {/* Empty Team Slots */}
-                                {Array.from({ length: 6 - teamPokemon.length }).map((_, i) => (
-                                    <div
-                                        key={`empty-${i}`}
-                                        className="aspect-auto h-72 bg-gray-200 rounded-lg border-2 border-gray-300 opacity-50 flex items-center text-center text-sm"
+                                <PokemonCard
+                                    stats={pokemon.stats}
+                                    imagePath={pokemon.imagePath}
+                                    onClick={() => {
+                                        setSelectedPokemon(pokemon)
+                                        setViewerOpen(true)
+                                    }}
+                                />
+                                <div className="absolute top-0 left-0 flex flex-col">
+                                    <Button
+                                        variant="secondary"
+                                        className='m-1 p-0 '
+                                        size="icon"
+                                        onClick={() => handleMoveUp(index)}
+                                        disabled={index === 0}
+                                        type="button"
                                     >
-                                        Drag and drop pokemon here to add to team
-                                    </ div>
-                                ))}
-                            </div>
-                        )}
-                    </Droppable>
-
-                    {/* All Pokemon Section */}
-                    <div className="mt-8 space-y-4">
-                        <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wide border-b-2 border-lime-500 pb-2">
-                            Others
-                        </h2>
-
-                        <Droppable droppableId="all" direction="horizontal">
-                            {(provided) => (
-                                <div
-                                    ref={provided.innerRef}
-                                    {...provided.droppableProps}
-                                    className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4"
-                                >
-                                    <AnimatePresence>
-                                        {allPokemon.map((pokemon, index) => (
-                                            <Draggable
-                                                key={pokemon.id}
-                                                draggableId={pokemon.id}
-                                                index={index}
-                                            >
-                                                {(provided, snapshot) => (
-                                                    <DraggableItem
-                                                        ref={provided.innerRef}
-                                                        {...provided.draggableProps}
-                                                        {...provided.dragHandleProps}
-                                                        className={`
-                                                            aspect-square relative cursor-move
-                                                            ${snapshot.isDragging ? 'z-50' : 'z-0'}
-                                                        `}
-                                                        onClick={() => {
-                                                            setSelectedPokemon(pokemon)
-                                                            setViewerOpen(true)
-                                                        }}
-                                                    >
-                                                        <PokemonCard
-                                                            stats={pokemon.stats}
-                                                            imagePath={pokemon.imagePath}
-                                                        />
-                                                    </DraggableItem>
-                                                )}
-                                            </Draggable>
-                                        ))}
-                                        {provided.placeholder}
-                                    </AnimatePresence>
+                                        <ArrowUp className="h-2 w-2" />
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        className='m-1 p-0 '
+                                        size="icon"
+                                        onClick={() => handleMoveDown(index)}
+                                        disabled={index === teamPokemon.length - 1}
+                                        type="button"
+                                    >
+                                        <ArrowDown className="h-2 w-2" />
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        className='m-1 p-0 '
+                                        size="icon"
+                                        onClick={() => handleRemoveFromTeam(pokemon)}
+                                        type="button"
+                                    >
+                                        <Archive className="h-2 w-2 text-red-700" />
+                                    </Button>
                                 </div>
-                            )}
-                        </Droppable>
-                    </div>
-                </DragDropContext>
+                            </div>
+                        ))}
+                    </AnimatePresence>
+
+                    {/* Empty Team Slots */}
+                    {Array.from({ length: 6 - teamPokemon.length }).map((_, i) => (
+                        <div
+                            key={`empty-${i}`}
+                            className="h-72 bg-gray-200 rounded-lg border-2 border-gray-300 opacity-50 flex items-center justify-center text-sm text-center"
+                        >
+                            Empty (add from below)
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* All Pokemon Section */}
+            <div className="mt-8 space-y-4">
+                <h2 className="text-xl font-bold text-gray-800 uppercase tracking-wide border-b-2 border-lime-500 pb-2">
+                    Others
+                </h2>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                    <AnimatePresence>
+                        {allPokemon.map((pokemon) => (
+                            <div
+                                key={pokemon.id}
+                                className="relative"
+                            >
+                                <PokemonCard
+                                    stats={pokemon.stats}
+                                    imagePath={pokemon.imagePath}
+                                    onClick={() => {
+                                        setSelectedPokemon(pokemon)
+                                        setViewerOpen(true)
+                                    }}
+                                />
+                                <Button
+                                    variant="secondary"
+                                    size="icon"
+                                    className="absolute top-0 left-0 m-1"
+                                    onClick={() => handleAddToTeam(pokemon)}
+                                    disabled={teamPokemon.length >= 6}
+                                    type="button"
+                                >
+                                    <Plus className="h-2 w-2 text-green-900" />
+                                </Button>
+                            </div>
+                        ))}
+                    </AnimatePresence>
+                </div>
             </div>
 
             {/* Pokemon Viewer Dialog */}
@@ -252,6 +239,7 @@ export function PokemonTeamSelector({ profile, onTeamUpdate }: PokemonTeamSelect
                     stats={selectedPokemon.stats}
                     imagePath={selectedPokemon.imagePath}
                     open={viewerOpen}
+                    // height={selectedPokemon.}
                     onOpenChange={setViewerOpen}
                     pokemonId={selectedPokemon.id}
                     onPokemonRelease={() => {

@@ -29,17 +29,40 @@ export function SignupForm() {
         }
 
         try {
-            const { data, error } = await supabase.auth.signUp({
+            const { data, error: signUpError } = await supabase.auth.signUp({
                 email,
                 password,
             })
 
-            if (error) throw error
+            if (signUpError) throw signUpError
+
+            // Create default trainer profile
+            const randomNumber = Math.floor(Math.random() * 1000);
+            const defaultName = `Ash_${randomNumber}`;
+
+            const { error: profileError } = await supabase
+                .from('trainers')
+                .insert([{
+                    user_id: data.user?.id,
+                    name: defaultName,
+                    age: 18,
+                    region: 'Kanto',
+                    stats: {
+                        totalPokemonCaught: 0,
+                        uniquePokemonTypes: 0,
+                        highestLevelPokemon: 0,
+                        favoritePokemonType: '',
+                        winRate: 0
+                    }
+                }])
+
+            if (profileError) {
+                console.error('Error creating trainer profile:', profileError)
+                // Continue anyway as the user can create profile later
+            }
 
             const { data: { session } } = await supabase.auth.getSession()
             console.log("Session after signup:", session)
-
-            
 
             if (session) {
                 router.push("/profile")
