@@ -505,7 +505,7 @@ function determineStatusEffect(moveType: string, targetPokemon: PokemonStats): S
   if (Math.random() < statusEffect.chance) {
     return {
       type: statusEffect.type,
-      duration: 3,
+      duration: 1,
       damagePerTurn: statusEffect.type === 'burn' ? 10 : 
                      statusEffect.type === 'poison' ? 8 : 
                      undefined,
