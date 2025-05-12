@@ -39,8 +39,10 @@ export function SignupForm() {
             const { data: { session } } = await supabase.auth.getSession()
             console.log("Session after signup:", session)
 
+            
+
             if (session) {
-                router.push("/dashboard")
+                router.push("/profile")
             } else {
                 throw new Error("Failed to get session after signup")
             }

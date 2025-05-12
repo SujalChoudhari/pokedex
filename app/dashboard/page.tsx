@@ -179,7 +179,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="w-screen h-full mx-auto font-mono">
+        <div className="w-screen h-full mx-auto font-mono bg-red-700">
             {/* Kanto Pokedex Outer Frame */}
             <div className="w-full h-[97vh] bg-red-700 shadow-lg border-red-900">
                 {/* Top Decorative Lights */}
@@ -193,9 +193,9 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Main Content Area */}
-                <div className="flex w-full h-full flex-col md:flex-row justify-around">
+                <div className="flex w-full h-screen flex-col md:flex-row justify-around">
                     {/* Left Panel: Screen Area */}
-                    <div className="flex-grow w-full h-full md:w-3/5 bg-gray-700 rounded border-2 border-gray-800 shadow-inner p-2">
+                    <div className="flex-grow w-full h-[81vh] md:w-3/5 bg-gray-700 rounded border-2 border-gray-800 shadow-inner p-2">
                         {/* Classic Green LCD Screen */}
                         <div className="bg-gray-950 w-full h-full rounded-sm overflow-hidden border-2 border-lime-500 relative flex flex-col">
 
@@ -283,7 +283,6 @@ export default function DashboardPage() {
                                 <Plus className="h-4 w-4" />
                             </div>
                         </Button>
-                        <span className="text-white text-xs sm:text-sm font-bold uppercase tracking-wide">Catch New</span>
                     </div>
                 </div>
             </div>
