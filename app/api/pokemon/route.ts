@@ -53,7 +53,7 @@ Follow these steps to analyze the image and create a Pokémon-inspired descripti
 5. If you see a human, use their expression to assign their types, anger is fire, etc. etc.
 
 Based on your analysis, create a JSON object with the following structure:
-
+All fields are compulsory:
 {
   "currentForm": {
     "name": string,

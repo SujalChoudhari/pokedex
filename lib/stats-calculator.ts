@@ -1,10 +1,20 @@
 import type { CapturedPokemon, TrainerStats } from './trainer-types';
-
 export function calculateTrainerStats(pokemon: CapturedPokemon[]): TrainerStats {
+    if (pokemon.length === 0) {
+        return {
+            totalPokemonCaught: 0,
+            uniquePokemonTypes: 0,
+            highestLevelPokemon: 0,
+            favoritePokemonType: '',
+            winRate: 0 // Placeholder for future battle system
+        };
+    }
+
     // Total Pokémon caught
     const totalPokemonCaught = pokemon.length;
 
     // Unique types
+    console.log(pokemon)
     const allTypes = pokemon.flatMap(p => p.stats.currentForm.types);
     const uniqueTypes = new Set(allTypes);
     const uniquePokemonTypes = uniqueTypes.size;
