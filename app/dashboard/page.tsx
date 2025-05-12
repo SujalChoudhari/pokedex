@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase"
 import { PokemonCard } from "@/components/pokemon/pokemon-card"
 import { PokemonViewer } from "@/components/pokemon/pokemon-viewer"
 import { Loader } from "@/components/ui/loader"
-import { Plus } from "lucide-react"
+import { LogOut, Plus, User2 } from "lucide-react"
 import { toast } from "sonner"
 import type { TrainerProfile, TrainerProfile as TrainerProfileType } from '@/lib/trainer-types'
 import type { PokemonStats } from "@/lib/types"
@@ -204,17 +204,23 @@ export default function DashboardPage() {
                                 <h1 className="text-black font-bold text-sm sm:text-base uppercase tracking-wide">Trainer's Pokedex</h1>
                                 <div className="flex gap-2">
                                     <Button
-                                        onClick={() => router.push('/profile')}
+                                        onClick={() => router.push('/match')}
                                         className="h-7 text-xs bg-blue-500 hover:bg-blue-600 text-white"
                                     >
-                                        PROFILE
+                                        BATTLE!
+                                    </Button>
+                                    <Button
+                                        onClick={() => router.push('/profile')}
+                                        className="h-7 text-xs bg-cyan-500 hover:bg-cyan-600 text-white"
+                                    >
+                                        <User2 />
                                     </Button>
                                     <Button
                                         variant="outline"
                                         onClick={handleSignOut}
                                         className="h-7 text-xs bg-red-500 hover:bg-red-600 text-white border-red-700"
                                     >
-                                        LOG OUT
+                                        <LogOut />
                                     </Button>
                                 </div>
                             </div>
@@ -250,10 +256,10 @@ export default function DashboardPage() {
                                                     profile={profile as TrainerProfileType}
                                                     onTeamUpdate={(newTeam) => {
                                                         setProfile({
-                                                          ...profile,
-                                                          team: newTeam
+                                                            ...profile,
+                                                            team: newTeam
                                                         } as TrainerProfile);
-                                                      }}
+                                                    }}
                                                 />
                                             </div>
                                         )}
