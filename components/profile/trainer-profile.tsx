@@ -292,18 +292,7 @@ export function TrainerProfile({ profile, onProfileUpdate }: TrainerProfileProps
         </div>
       </div>
 
-      {/* Pokemon Team */}
-      {profile?.captured_pokemon && profile.captured_pokemon.length > 0 && (
-        <PokemonTeamSelector
-          profile={profile}
-          onTeamUpdate={(newTeam) => {
-            onProfileUpdate({
-              ...profile,
-              team: newTeam
-            });
-          }}
-        />
-      )}
+     
     </div>
   )
 }

@@ -10,30 +10,41 @@ import { ChangeEvent, useCallback, useRef, useState } from 'react';
 import Webcam from 'react-webcam';
 import { toast } from 'sonner';
 import { BattleArena } from './battle-arena';
+import Link from 'next/link';
 
 interface CameraCaptureProps {
     onCaptureSuccess?: () => void;
     playerTeam?: PokemonStats[]; // Add player's team prop
 }
 
-// Simple CSS Pokeball for throwing animation visual
-const ThrownPokeball = ({ isShaking }: { isShaking?: boolean }) => (
+// Enhanced CSS Pokeball for throwing animation visual
+const ThrownPokeball = ({ isShaking, isOpening }: { isShaking?: boolean; isOpening?: boolean }) => (
     <div
         className={`
-      w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-black overflow-hidden
-      relative transition-all duration-500 ease-out
-      ${isShaking ? "animate-pokeball-shake" : ""}
-    `}
+            w-12 h-12 sm:w-16 sm:h-16 rounded-full border-2 border-black overflow-hidden
+            relative transition-all duration-500
+            ${isShaking ? "animate-pokeball-shake" : ""}
+            ${isOpening ? "animate-pokeball-flash" : ""}
+        `}
         style={{
-            boxShadow: "inset 0 -2px 0px 1px rgba(0,0,0,0.3)", // Classic inner shadow
+            boxShadow: "inset 0 -2px 0px 1px rgba(0,0,0,0.3)",
+            transform: isShaking ? "rotate(0deg)" : "rotate(0deg)",
+            animation: isShaking 
+                ? "shake 0.5s infinite" 
+                : isOpening 
+                ? "flash 0.3s ease-out"
+                : "none"
         }}
     >
-        <div className="absolute top-0 left-0 w-full h-1/2 bg-red-500"></div>
-        <div className="absolute bottom-0 left-0 w-full h-1/2 bg-white"></div>
+        <div className={`absolute top-0 left-0 w-full h-1/2 bg-red-500 transition-transform duration-300 ${isOpening ? "translate-y-[-100%]" : ""}`}></div>
+        <div className={`absolute bottom-0 left-0 w-full h-1/2 bg-white transition-transform duration-300 ${isOpening ? "translate-y-[100%]" : ""}`}></div>
         <div className="absolute top-1/2 left-0 w-full h-2 sm:h-2.5 bg-black transform -translate-y-1/2 z-10"></div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-5 h-5 sm:w-6 sm:h-6 bg-white rounded-full border-2 border-black z-20">
             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gray-200 rounded-full border border-black"></div>
         </div>
+        {isOpening && (
+            <div className="absolute inset-0 bg-white animate-flash-fade"></div>
+        )}
     </div>
 );
 
@@ -49,13 +60,15 @@ export function CameraCapture({ onCaptureSuccess }: CameraCaptureProps) {
 
     const [playerTeam, setPlayerTeam] = useState<PokemonStats[] | null>(null);
 
-    // State for throwing animation visual
+    // Enhanced animation states
     const [pokeballAnimating, setPokeballAnimating] = useState(false);
     const [isShaking, setIsShaking] = useState(false);
+    const [isOpening, setIsOpening] = useState(false);
     const [pokeballPosition, setPokeballPosition] = useState({
         top: "110%",
         left: "50%",
         scale: 0.3,
+        rotate: 0,
     });
 
     const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
@@ -173,6 +186,7 @@ export function CameraCapture({ onCaptureSuccess }: CameraCaptureProps) {
             if (!imageSrc) {
                 toast.error('No image source available for capture.');
                 setCapturing(false);
+                setPokeballAnimating(false);
                 return;
             }
 
@@ -204,7 +218,6 @@ export function CameraCapture({ onCaptureSuccess }: CameraCaptureProps) {
                 .limit(1)
                 .single();
 
-
             if (playerTeamIdList) {
                 const teamList: string[] = playerTeamIdList.team;
 
@@ -227,7 +240,6 @@ export function CameraCapture({ onCaptureSuccess }: CameraCaptureProps) {
                     // Set first Pokemon as player's active Pokemon
                     setPlayerPokemon(pokemonTeam[0]);
                     setInBattle(true);
-                    setCapturing(false);
                 } else {
                     // First Pokemon - direct capture
                     await handleCapture(imageSrc, wildPokemonData, userId);
@@ -243,38 +255,91 @@ export function CameraCapture({ onCaptureSuccess }: CameraCaptureProps) {
             setTempImageSrc(null);
         } finally {
             setCapturing(false);
+            setPokeballAnimating(false);
         }
     }, [selectedImage, webcamRef]);
 
-    const triggerCaptureFlow = useCallback(() => {
-        if (!selectedImage && !webcamRef.current) {
-            toast.info('Aim with the webcam or select an image first!');
-            return;
-        }
-
+    // Animation timeline function
+    const animatePokeball = useCallback(() => {
         if (capturing || pokeballAnimating || isShaking) {
             return;
         }
 
         setPokeballAnimating(true);
-        setIsShaking(false);
-        setPokeballPosition({ top: "110%", left: "50%", scale: 0.3 });
+        
+        // Initial position
+        setPokeballPosition({
+            top: "90%",
+            left: "50%",
+            scale: 0.8,
+            rotate: 0
+        });
+
+        // Throw animation with curve
+        setTimeout(() => {
+            setPokeballPosition({
+                top: "40%",
+                left: "55%",
+                scale: 1,
+                rotate: 720
+            });
+        }, 100);
 
         setTimeout(() => {
-            setPokeballPosition({ top: "50%", left: "50%", scale: 1 });
-        }, 50);
+            setPokeballPosition({
+                top: "50%",
+                left: "50%",
+                scale: 1,
+                rotate: 1080
+            });
+        }, 500);
+
+        // Landing bounce
+        setTimeout(() => {
+            setPokeballPosition({
+                top: "55%",
+                left: "50%",
+                scale: 0.9,
+                rotate: 1080
+            });
+        }, 600);
 
         setTimeout(() => {
+            setPokeballPosition({
+                top: "50%",
+                left: "50%",
+                scale: 1,
+                rotate: 1080
+            });
+        }, 700);
+
+        // Open animation
+        setTimeout(() => {
+            setIsOpening(true);
+        }, 1000);
+
+        // Start shaking
+        setTimeout(() => {
+            setIsOpening(false);
             setIsShaking(true);
-            setTimeout(() => {
-                setIsShaking(false);
-                setPokeballAnimating(false);
-                setCapturing(true);
-                performActualAnalysisAndSave();
-            }, 1800);
-        }, 550);
+        }, 1500);
 
-    }, [selectedImage, webcamRef, capturing, pokeballAnimating, isShaking, performActualAnalysisAndSave]);
+        // Stop shaking and proceed with capture
+        setTimeout(() => {
+            setIsShaking(false);
+            setCapturing(true);
+            performActualAnalysisAndSave();
+        }, 3000);
+    }, [capturing, pokeballAnimating, isShaking, performActualAnalysisAndSave]);
+
+    const triggerCaptureFlow = useCallback(() => {
+        if (!selectedImage && !webcamRef.current) {
+            toast.error('No image source available');
+            return;
+        }
+
+        animatePokeball();
+    }, [selectedImage, webcamRef, animatePokeball]);
 
     const resetState = () => {
         setSelectedImage(null);
@@ -284,7 +349,8 @@ export function CameraCapture({ onCaptureSuccess }: CameraCaptureProps) {
         }
         setPokeballAnimating(false);
         setIsShaking(false);
-        setPokeballPosition({ top: "110%", left: "50%", scale: 0.3 });
+        setIsOpening(false);
+        setPokeballPosition({ top: "110%", left: "50%", scale: 0.3, rotate: 0 });
         setCapturing(false);
     };
 
@@ -375,12 +441,12 @@ export function CameraCapture({ onCaptureSuccess }: CameraCaptureProps) {
                                                 position: "absolute",
                                                 top: pokeballPosition.top,
                                                 left: pokeballPosition.left,
-                                                transform: `translate(-50%, -50%) scale(${pokeballPosition.scale})`,
-                                                transition: "top 0.5s ease-out, left 0.5s ease-out, transform 0.5s ease-out",
+                                                transform: `translate(-50%, -50%) scale(${pokeballPosition.scale}) rotate(${pokeballPosition.rotate}deg)`,
+                                                transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
                                             }}
                                             className="z-20"
                                         >
-                                            <ThrownPokeball isShaking={isShaking} />
+                                            <ThrownPokeball isShaking={isShaking} isOpening={isOpening} />
                                         </div>
                                     )}
 
@@ -477,6 +543,23 @@ export function CameraCapture({ onCaptureSuccess }: CameraCaptureProps) {
 
                             <div className="md:w-2/5 flex flex-col justify-center items-center space-y-2 p-1.5 sm:p-2 bg-red-600 rounded border-2 border-red-800">
                                 <div className="flex items-center gap-2 w-full">
+                                <Link href="/dashboard">
+                                <Button
+                                            variant="outline"
+                                            
+                                            
+                                            className="
+                                                bg-blue-400 hover:bg-blue-500 text-black font-semibold
+                                                rounded-md border-b-4 border-blue-600 hover:border-blue-500 active:border-b-0 active:mt-0.5
+                                                disabled:opacity-60 disabled:pointer-events-none
+                                                text-xs sm:text-sm uppercase tracking-wider
+                                                w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center
+                                                p-0
+                                            "
+                                        >
+                                            {"<"}
+                                        </Button></Link>
+
                                     {pokemonData === null ? (
                                         <div className="flex-grow flex justify-center">
                                             <button

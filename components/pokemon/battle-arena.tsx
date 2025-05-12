@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { PokemonStats, BattleMove, TypeAnimation, AnimationVariant } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, Variants, Target } from 'framer-motion';
 import { ArrowLeftRight } from 'lucide-react';
 
 interface BattleArenaProps {
@@ -326,26 +326,194 @@ const TYPE_EFFECTIVENESS: Record<PokemonType, {
     }
 };
 
-// Update the effectiveness calculation function
-function calculateMoveEffectiveness(moveType: PokemonType, defenderTypes: PokemonType[]): number {
-    let effectiveness = 1;
-    
-    for (const defenderType of defenderTypes) {
-        const typeInfo = TYPE_EFFECTIVENESS[defenderType];
-        if (!typeInfo) continue;
+// Add interfaces at the top
+interface StatusEffect {
+  type: 'burn' | 'poison' | 'paralyze' | 'sleep' | 'freeze';
+  duration: number;
+  damagePerTurn?: number;
+  skipTurnChance?: number;
+}
 
-        if (typeInfo.immune.includes(moveType)) {
-            return 0;
-        }
-        if (typeInfo.weak.includes(moveType)) {
-            effectiveness *= 2;
-        }
-        if (typeInfo.resistant.includes(moveType)) {
-            effectiveness *= 0.5;
-        }
+interface BattleState {
+  playerPokemon: TeamMemberState;
+  wildPokemon: TeamMemberState;
+  teamState: TeamMemberState[];
+  turn: 'player' | 'wild';
+  isPlayerTurn: boolean;
+  latestLog: string;
+  canFlee: boolean;
+  battleStatus: 'ongoing' | 'won' | 'lost' | 'fled';
+  playerStatus?: StatusEffect;
+  wildStatus?: StatusEffect;
+}
+
+interface DamageResult {
+  damage: number;
+  effectiveness: number;
+  isCritical: boolean;
+}
+
+interface AnimationTransition {
+  duration: number;
+  repeat?: number;
+  ease?: string;
+  times?: number[];
+}
+
+interface AnimationStyle {
+  scale?: number | number[];
+  rotate?: number | number[];
+  opacity?: number | number[];
+  x?: number | number[];
+  y?: number | number[];
+  filter?: string | string[];
+  backgroundColor?: string | string[];
+  transition: AnimationTransition;
+}
+
+// Update type effectiveness calculation
+function calculateMoveEffectiveness(moveType: PokemonType, defenderTypes: PokemonType[]): number {
+  let effectiveness = 1;
+  
+  for (const defenderType of defenderTypes) {
+    const typeInfo = TYPE_EFFECTIVENESS[defenderType];
+    if (!typeInfo) continue;
+
+    if (typeInfo.immune.includes(moveType)) {
+      return 0;
     }
-    
-    return effectiveness;
+    if (typeInfo.weak.includes(moveType)) {
+      effectiveness *= 2;
+    }
+    if (typeInfo.resistant.includes(moveType)) {
+      effectiveness *= 0.5;
+    }
+  }
+  
+  return effectiveness;
+}
+
+// Update status effect animations with keyframes
+const STATUS_ANIMATIONS: Record<string, Variants> = {
+  burn: {
+    animate: {
+      opacity: [0, 1, 0],
+      backgroundColor: "rgba(255,0,0,0.2)",
+      transition: {
+        duration: 1,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  },
+  poison: {
+    animate: {
+      opacity: [0, 1, 0],
+      backgroundColor: "rgba(128,0,128,0.2)",
+      transition: {
+        duration: 1,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  },
+  paralyze: {
+    animate: {
+      opacity: [0, 1, 0],
+      backgroundColor: "rgba(255,255,0,0.2)",
+      transition: {
+        duration: 0.5,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  },
+  sleep: {
+    animate: {
+      opacity: 0.5,
+      scale: 0.95,
+      transition: {
+        duration: 2,
+        repeat: Infinity,
+        repeatType: "reverse",
+        ease: "easeInOut"
+      }
+    }
+  },
+  freeze: {
+    animate: {
+      opacity: [0.5, 1, 0.5],
+      filter: "brightness(1.5)",
+      transition: {
+        duration: 1,
+        repeat: Infinity,
+        ease: "easeInOut"
+      }
+    }
+  }
+};
+
+// Add status effect emojis
+const STATUS_EMOJIS = {
+  burn: '🔥',
+  poison: '☠️',
+  paralyze: '⚡',
+  sleep: '💤',
+  freeze: '❄️'
+};
+
+// Add move type to status effect mapping
+const MOVE_STATUS_EFFECTS: Record<string, {
+  type: 'burn' | 'poison' | 'paralyze' | 'sleep' | 'freeze';
+  chance: number;
+}> = {
+  fire: { type: 'burn', chance: 0.3 },
+  poison: { type: 'poison', chance: 0.4 },
+  electric: { type: 'paralyze', chance: 0.3 },
+  psychic: { type: 'sleep', chance: 0.25 },
+  ice: { type: 'freeze', chance: 0.2 },
+};
+
+// Add type immunity to status effects
+const STATUS_IMMUNITIES: Record<string, string[]> = {
+  burn: ['fire', 'water'],
+  poison: ['poison', 'steel'],
+  paralyze: ['electric', 'ground'],
+  freeze: ['ice', 'fire'],
+  sleep: ['psychic', 'dark'],
+};
+
+// Function to check if a Pokémon can be affected by a status
+function canBeAffectedByStatus(pokemon: PokemonStats, statusType: string): boolean {
+  const pokemonTypes = pokemon.currentForm.types.map(t => t.toLowerCase());
+  const immuneTypes = STATUS_IMMUNITIES[statusType] || [];
+  return !pokemonTypes.some(type => immuneTypes.includes(type));
+}
+
+// Function to determine status effect based on move type
+function determineStatusEffect(moveType: string, targetPokemon: PokemonStats): StatusEffect | null {
+  const statusEffect = MOVE_STATUS_EFFECTS[moveType.toLowerCase()];
+  
+  if (!statusEffect) return null;
+  
+  // Check if the Pokémon can be affected by this status
+  if (!canBeAffectedByStatus(targetPokemon, statusEffect.type)) {
+    return null;
+  }
+  
+  // Apply chance check
+  if (Math.random() < statusEffect.chance) {
+    return {
+      type: statusEffect.type,
+      duration: 3,
+      damagePerTurn: statusEffect.type === 'burn' ? 10 : 
+                     statusEffect.type === 'poison' ? 8 : 
+                     undefined,
+      skipTurnChance: statusEffect.type === 'paralyze' ? 0.25 : undefined
+    };
+  }
+  
+  return null;
 }
 
 export function BattleArena({ 
@@ -363,16 +531,7 @@ export function BattleArena({
     fainted: false
   }));
 
-  const [battleState, setBattleState] = useState<{
-    playerPokemon: TeamMemberState;
-    wildPokemon: TeamMemberState;
-    teamState: TeamMemberState[];
-    turn: 'player' | 'wild';
-    isPlayerTurn: boolean;
-    battleLog: string[];
-    canFlee: boolean;
-    battleStatus: 'ongoing' | 'won' | 'lost' | 'fled';
-  }>({
+  const [battleState, setBattleState] = useState<BattleState>({
     playerPokemon: {
       stats: playerPokemon,
       currentHP: calculateMaxHP(playerPokemon.currentForm.baseStats.hp),
@@ -386,9 +545,9 @@ export function BattleArena({
     teamState: initialTeamState,
     turn: 'player',
     isPlayerTurn: true,
-    battleLog: [`A wild ${wildPokemon.currentForm.name} appeared!`],
+    latestLog: `A wild ${wildPokemon.currentForm.name} appeared!`,
     canFlee: true,
-    battleStatus: 'ongoing',
+    battleStatus: 'ongoing'
   });
 
   const [attackAnimation, setAttackAnimation] = useState<{
@@ -402,13 +561,45 @@ export function BattleArena({
     return Math.floor((2 * baseHP * 50) / 100 + 50 + 10);
   }
 
-  function calculateDamage(move: BattleMove, attacker: PokemonStats, defender: PokemonStats): number {
+  // Update damage calculation function signature
+  function calculateDamage(move: BattleMove, attacker: PokemonStats, defender: PokemonStats, attackerStatus?: StatusEffect, defenderStatus?: StatusEffect): DamageResult {
     const power = move.power;
-    const attack = move.category === 'physical' ? attacker.currentForm.baseStats.attack : attacker.currentForm.baseStats.specialAttack;
-    const defense = move.category === 'physical' ? defender.currentForm.baseStats.defense : defender.currentForm.baseStats.specialDefense;
+    let attack = move.category === 'physical' ? attacker.currentForm.baseStats.attack : attacker.currentForm.baseStats.specialAttack;
+    let defense = move.category === 'physical' ? defender.currentForm.baseStats.defense : defender.currentForm.baseStats.specialDefense;
     
-    const damage = Math.floor(((2 * 50 / 5 + 2) * power * attack / defense) / 50 + 2);
-    return Math.max(1, damage);
+    // Status effect modifiers
+    if (attackerStatus) {
+      if (attackerStatus.type === 'burn' && move.category === 'physical') {
+        attack = Math.floor(attack * 0.5); // Burn halves physical attack
+      }
+    }
+    
+    // Calculate base damage
+    let damage = Math.floor(((2 * 50 / 5 + 2) * power * attack / defense) / 50 + 2);
+    
+    // Calculate type effectiveness
+    const moveType = move.type.toLowerCase() as PokemonType;
+    const defenderTypes = defender.currentForm.types.map(t => t.toLowerCase() as PokemonType);
+    const effectiveness = calculateMoveEffectiveness(moveType, defenderTypes);
+    
+    // Apply effectiveness multiplier
+    damage = Math.floor(damage * effectiveness);
+    
+    // Critical hit chance (6.25%)
+    const isCritical = Math.random() < 0.0625;
+    if (isCritical) {
+      damage = Math.floor(damage * 1.5);
+    }
+    
+    // Random factor (85-100%)
+    const randomFactor = 0.85 + (Math.random() * 0.15);
+    damage = Math.floor(damage * randomFactor);
+    
+    return {
+      damage: Math.max(1, damage),
+      effectiveness,
+      isCritical
+    };
   }
 
   // Function to check if all team members have fainted
@@ -438,7 +629,7 @@ export function BattleArena({
         playerPokemon: newPokemonState,
         teamState: newTeamState,
         isPlayerTurn: false,
-        battleLog: [...prev.battleLog, `Go! ${newPokemon.currentForm.name}!`],
+        latestLog: `Go! ${newPokemon.currentForm.name}!`,
       };
       
       // Schedule wild Pokemon's turn after state update
@@ -454,26 +645,42 @@ export function BattleArena({
   const handleWildPokemonTurn = async (currentState = battleState) => {
     const wildMoves = wildPokemon.currentForm.moves;
     const randomMove = wildMoves[Math.floor(Math.random() * wildMoves.length)];
+    const moveType = wildPokemon.currentForm.types[0];
 
     setAttackAnimation({ 
       isAnimating: true, 
       attacker: 'wild',
-      type: wildPokemon.currentForm.types[0].toLowerCase()
+      type: moveType.toLowerCase()
     });
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const wildDamage = calculateDamage(
-      { name: randomMove, power: 50, accuracy: 95, type: wildPokemon.currentForm.types[0], category: 'physical' },
+    const { damage, effectiveness, isCritical } = calculateDamage(
+      { name: randomMove, power: 50, accuracy: 95, type: moveType, category: 'physical' },
       wildPokemon,
-      currentState.playerPokemon.stats // Use the current active Pokemon's stats
+      currentState.playerPokemon.stats,
+      currentState.wildStatus,
+      currentState.playerStatus
     );
 
-    const newPlayerHP = Math.max(0, currentState.playerPokemon.currentHP - wildDamage);
+    const newPlayerHP = Math.max(0, currentState.playerPokemon.currentHP - damage);
     const newTeamState = currentState.teamState.map(member =>
       member.stats === currentState.playerPokemon.stats
         ? { ...member, currentHP: newPlayerHP, fainted: newPlayerHP <= 0 }
         : member
     );
+
+    // Generate battle message
+    let battleMessage = `${wildPokemon.currentForm.name} used ${randomMove}!`;
+    if (isCritical) battleMessage += " A critical hit!";
+    if (effectiveness > 1) battleMessage += " It's super effective!";
+    else if (effectiveness < 1 && effectiveness > 0) battleMessage += " It's not very effective...";
+    else if (effectiveness === 0) battleMessage += " It had no effect...";
+
+    // Check for status effect based on move type
+    const newStatus = determineStatusEffect(moveType, currentState.playerPokemon.stats);
+    if (newStatus && !currentState.playerStatus) {
+      battleMessage += ` ${currentState.playerPokemon.stats.currentForm.name} was ${newStatus.type}ed!`;
+    }
 
     setBattleState(prev => {
       const updatedState = {
@@ -483,37 +690,28 @@ export function BattleArena({
           currentHP: newPlayerHP,
           fainted: newPlayerHP <= 0
         },
+        playerStatus: newStatus || prev.playerStatus,
         teamState: newTeamState,
         isPlayerTurn: true,
-        battleLog: [...prev.battleLog, `${wildPokemon.currentForm.name} used ${randomMove}!`],
+        latestLog: battleMessage,
       };
 
       if (newPlayerHP <= 0) {
         const nextPokemon = findNextAvailablePokemon(newTeamState);
         
         if (nextPokemon) {
-          // Automatically swap to next available Pokemon
           setTimeout(() => {
             setBattleState(prevState => ({
               ...prevState,
               playerPokemon: nextPokemon,
-              battleLog: [
-                ...prevState.battleLog,
-                `${currentState.playerPokemon.stats.currentForm.name} fainted!`,
-                `Go! ${nextPokemon.stats.currentForm.name}!`
-              ],
+              latestLog: `${currentState.playerPokemon.stats.currentForm.name} fainted!`,
             }));
           }, 1000);
         } else if (checkTeamWipeout(newTeamState)) {
-          // All Pokemon have fainted
           return {
             ...updatedState,
             battleStatus: 'lost',
-            battleLog: [
-              ...prev.battleLog,
-              `${currentState.playerPokemon.stats.currentForm.name} fainted!`,
-              'All your Pokémon have fainted!'
-            ],
+            latestLog: `${currentState.playerPokemon.stats.currentForm.name} fainted!`,
           };
         }
       }
@@ -528,26 +726,70 @@ export function BattleArena({
     }
   };
 
+  // Update handleMove function to use the new status effect logic
   async function handleMove(moveName: string) {
     if (!battleState.isPlayerTurn || battleState.battleStatus !== 'ongoing') return;
 
+    // Check if player is affected by status that prevents movement
+    if (battleState.playerStatus) {
+      if (battleState.playerStatus.type === 'sleep' || battleState.playerStatus.type === 'freeze') {
+        setBattleState(prev => ({
+          ...prev,
+          latestLog: `${playerPokemon.currentForm.name} is ${battleState.playerStatus?.type}ing!`,
+          isPlayerTurn: false
+        }));
+        setTimeout(() => handleWildPokemonTurn(), 1500);
+        return;
+      }
+      if (battleState.playerStatus.type === 'paralyze' && Math.random() < 0.25) {
+        setBattleState(prev => ({
+          ...prev,
+          latestLog: `${playerPokemon.currentForm.name} is paralyzed and can't move!`,
+          isPlayerTurn: false
+        }));
+        setTimeout(() => handleWildPokemonTurn(), 1500);
+        return;
+      }
+    }
+
+    const moveType = playerPokemon.currentForm.types[0];
     const move: BattleMove = {
       name: moveName,
       power: 50,
       accuracy: 95,
-      type: playerPokemon.currentForm.types[0],
+      type: moveType,
       category: 'physical',
     };
 
     setAttackAnimation({ 
       isAnimating: true, 
       attacker: 'player',
-      type: playerPokemon.currentForm.types[0].toLowerCase()
+      type: moveType.toLowerCase()
     });
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    const damage = calculateDamage(move, playerPokemon, wildPokemon);
+    const { damage, effectiveness, isCritical } = calculateDamage(
+      move, 
+      playerPokemon, 
+      wildPokemon,
+      battleState.playerStatus,
+      battleState.wildStatus
+    );
+
     const newWildHP = Math.max(0, battleState.wildPokemon.currentHP - damage);
+
+    // Generate battle message based on effectiveness and critical hit
+    let battleMessage = `${playerPokemon.currentForm.name} used ${moveName}!`;
+    if (isCritical) battleMessage += " A critical hit!";
+    if (effectiveness > 1) battleMessage += " It's super effective!";
+    else if (effectiveness < 1 && effectiveness > 0) battleMessage += " It's not very effective...";
+    else if (effectiveness === 0) battleMessage += " It had no effect...";
+
+    // Check for status effect based on move type
+    const newStatus = determineStatusEffect(moveType, wildPokemon);
+    if (newStatus && !battleState.wildStatus) {
+      battleMessage += ` ${wildPokemon.currentForm.name} was ${newStatus.type}ed!`;
+    }
 
     setBattleState(prev => ({
       ...prev,
@@ -555,8 +797,9 @@ export function BattleArena({
         ...prev.wildPokemon,
         currentHP: newWildHP,
       },
+      wildStatus: newStatus || prev.wildStatus,
       isPlayerTurn: false,
-      battleLog: [...prev.battleLog, `${playerPokemon.currentForm.name} used ${moveName}!`],
+      latestLog: battleMessage,
     }));
 
     setAttackAnimation({ isAnimating: false, attacker: 'player' });
@@ -565,7 +808,7 @@ export function BattleArena({
       setBattleState(prev => ({
         ...prev,
         battleStatus: 'won',
-        battleLog: [...prev.battleLog, `${wildPokemon.currentForm.name} fainted!`],
+        latestLog: `${wildPokemon.currentForm.name} fainted!`,
       }));
       onBattleEnd('won');
       return;
@@ -583,7 +826,7 @@ export function BattleArena({
     setBattleState(prev => ({
       ...prev,
       battleStatus: 'fled',
-      battleLog: [...prev.battleLog, 'Got away safely!'],
+      latestLog: 'Got away safely!',
     }));
     onBattleEnd('fled');
   }
@@ -591,82 +834,109 @@ export function BattleArena({
   return (
     <div className="w-full h-full bg-gradient-to-b from-gray-800 to-gray-900 p-4 font-mono text-white">
       {/* Battle Arena */}
-      <div className="relative w-full h-[55vh] bg-gradient-to-b from-gray-700 to-gray-800 rounded-lg border-4 border-gray-600 overflow-hidden">
-        {/* Wild Pokemon */}
-        <div className="absolute top-10 right-4 w-48 h-48">
+      <div className="w-full h-[65vh] bg-gradient-to-b from-gray-700 to-gray-800 rounded-lg border-4 border-gray-600 overflow-hidden flex flex-col justify-between p-4">
+        {/* Wild Pokemon Section */}
+        <div className="flex justify-end items-start gap-4">
+          {/* Stats Card */}
+          <div className="bg-white/10 rounded-lg backdrop-blur-sm p-2">
+            <div className="flex items-center gap-2">
+              <div className="text-sm font-bold">{wildPokemon.currentForm.name}</div>
+              <div className="text-xs bg-blue-500 px-1.5 rounded">
+                Lv.{wildPokemon.currentForm.level}
+              </div>
+              {battleState.wildStatus && (
+                <div className="text-lg" title={battleState.wildStatus.type}>
+                  {STATUS_EMOJIS[battleState.wildStatus.type]}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-1 mb-1">
+              {wildPokemon.currentForm.types.map((type) => (
+                <span
+                  key={type}
+                  className={`text-xs px-1.5 py-0.5 rounded-sm uppercase
+                    ${type.toLowerCase() === 'fire' ? 'bg-red-500' :
+                    type.toLowerCase() === 'water' ? 'bg-blue-500' :
+                    type.toLowerCase() === 'grass' ? 'bg-green-500' :
+                    type.toLowerCase() === 'electric' ? 'bg-yellow-500' :
+                    type.toLowerCase() === 'ice' ? 'bg-cyan-400' :
+                    type.toLowerCase() === 'fighting' ? 'bg-orange-700' :
+                    type.toLowerCase() === 'poison' ? 'bg-purple-500' :
+                    type.toLowerCase() === 'ground' ? 'bg-amber-800' :
+                    type.toLowerCase() === 'flying' ? 'bg-indigo-400' :
+                    type.toLowerCase() === 'psychic' ? 'bg-pink-500' :
+                    type.toLowerCase() === 'bug' ? 'bg-lime-500' :
+                    type.toLowerCase() === 'rock' ? 'bg-stone-500' :
+                    type.toLowerCase() === 'ghost' ? 'bg-violet-700' :
+                    type.toLowerCase() === 'dragon' ? 'bg-violet-500' :
+                    type.toLowerCase() === 'dark' ? 'bg-gray-800' :
+                    type.toLowerCase() === 'steel' ? 'bg-slate-400' :
+                    type.toLowerCase() === 'fairy' ? 'bg-pink-300' :
+                    'bg-gray-500'}`}
+                >
+                  {type}
+                </span>
+              ))}
+            </div>
+            <div className="h-2 bg-gray-700 rounded">
+              <motion.div
+                className="h-full bg-green-500 rounded"
+                initial={{ width: '100%' }}
+                animate={{
+                  width: `${(battleState.wildPokemon.currentHP / calculateMaxHP(wildPokemon.currentForm.baseStats.hp)) * 100}%`
+                }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+            <div className="text-xs mt-1">
+              {battleState.wildPokemon.currentHP} / {calculateMaxHP(wildPokemon.currentForm.baseStats.hp)}
+            </div>
+          </div>
+
+          {/* Pokemon Image */}
           <motion.div
-            className="relative w-full h-full"
+            className="relative w-48 h-48"
             animate={{
               x: attackAnimation.isAnimating && attackAnimation.attacker === 'player' ? [0, -10, 10, -10, 0] : 0,
               opacity: battleState.wildPokemon.currentHP <= 0 ? 0 : 1,
             }}
             transition={{ duration: 0.5 }}
           >
-            <div className="absolute inset-0 rounded-lg overflow-hidden">
+            <div className="w-full h-full rounded-lg overflow-hidden">
               <img
                 src={wildPokemonImage}
                 alt={wildPokemon.currentForm.name}
                 className="w-full h-full object-contain"
               />
             </div>
-            <div className="absolute -top-8 left-0 right-0 bg-white/10 rounded-lg backdrop-blur-sm p-2">
-              <div className="text-sm font-bold mb-1">{wildPokemon.currentForm.name}</div>
-              <div className="flex gap-1 mb-1">
-                {wildPokemon.currentForm.types.map((type) => (
-                  <span
-                    key={type}
-                    className={`text-xs px-1.5 py-0.5 rounded-sm uppercase
-                      ${type.toLowerCase() === 'fire' ? 'bg-red-500' :
-                      type.toLowerCase() === 'water' ? 'bg-blue-500' :
-                      type.toLowerCase() === 'grass' ? 'bg-green-500' :
-                      type.toLowerCase() === 'electric' ? 'bg-yellow-500' :
-                      type.toLowerCase() === 'ice' ? 'bg-cyan-400' :
-                      type.toLowerCase() === 'fighting' ? 'bg-orange-700' :
-                      type.toLowerCase() === 'poison' ? 'bg-purple-500' :
-                      type.toLowerCase() === 'ground' ? 'bg-amber-800' :
-                      type.toLowerCase() === 'flying' ? 'bg-indigo-400' :
-                      type.toLowerCase() === 'psychic' ? 'bg-pink-500' :
-                      type.toLowerCase() === 'bug' ? 'bg-lime-500' :
-                      type.toLowerCase() === 'rock' ? 'bg-stone-500' :
-                      type.toLowerCase() === 'ghost' ? 'bg-violet-700' :
-                      type.toLowerCase() === 'dragon' ? 'bg-violet-500' :
-                      type.toLowerCase() === 'dark' ? 'bg-gray-800' :
-                      type.toLowerCase() === 'steel' ? 'bg-slate-400' :
-                      type.toLowerCase() === 'fairy' ? 'bg-pink-300' :
-                      'bg-gray-500'}`}
-                  >
-                    {type}
-                  </span>
-                ))}
-              </div>
-              <div className="h-2 bg-gray-700 rounded">
-                <motion.div
-                  className="h-full bg-green-500 rounded"
-                  initial={{ width: '100%' }}
-                  animate={{
-                    width: `${(battleState.wildPokemon.currentHP / calculateMaxHP(wildPokemon.currentForm.baseStats.hp)) * 100}%`
-                  }}
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
-              <div className="text-xs mt-1">
-                {battleState.wildPokemon.currentHP} / {calculateMaxHP(wildPokemon.currentForm.baseStats.hp)}
-              </div>
-            </div>
           </motion.div>
         </div>
 
-        {/* Player Pokemon */}
-        <div className="absolute bottom-4 left-4 w-48 h-48">
+        {/* Battle Log */}
+        <AnimatePresence mode="wait">
           <motion.div
-            className="relative w-full h-full"
+            key={battleState.latestLog}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="self-center bg-black/50 backdrop-blur-sm px-4 py-2 rounded-lg text-white text-md font-bold text-center min-w-[300px]"
+          >
+            {battleState.latestLog}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Player Pokemon Section */}
+        <div className="flex justify-start items-start gap-4">
+          {/* Pokemon Image */}
+          <motion.div
+            className="relative w-48 h-48"
             animate={{
               x: attackAnimation.isAnimating && attackAnimation.attacker === 'wild' ? [0, 10, -10, 10, 0] : 0,
               opacity: battleState.playerPokemon.currentHP <= 0 ? 0 : 1,
             }}
             transition={{ duration: 0.5 }}
           >
-            <div className="absolute inset-0 rounded-lg overflow-hidden">
+            <div className="w-full h-full rounded-lg overflow-hidden">
               {battleState.playerPokemon.stats.image_path ? (
                 <img
                   src={`https://ukmcvfbydqejwaqkdjlj.supabase.co/storage/v1/object/public/pokemon-images/${battleState.playerPokemon.stats.image_path}`}
@@ -679,69 +949,80 @@ export function BattleArena({
                 </div>
               )}
             </div>
-            <div className="absolute -top-8 left-0 right-0 bg-white/10 rounded-lg backdrop-blur-sm p-2">
-              <div className="text-sm font-bold mb-1">{battleState.playerPokemon.stats.currentForm.name}</div>
-              <div className="flex gap-1 mb-1">
-                {battleState.playerPokemon.stats.currentForm.types.map((type) => (
-                  <span
-                    key={type}
-                    className={`text-xs px-1.5 py-0.5 rounded-sm uppercase
-                      ${type.toLowerCase() === 'fire' ? 'bg-red-500' :
-                      type.toLowerCase() === 'water' ? 'bg-blue-500' :
-                      type.toLowerCase() === 'grass' ? 'bg-green-500' :
-                      type.toLowerCase() === 'electric' ? 'bg-yellow-500' :
-                      type.toLowerCase() === 'ice' ? 'bg-cyan-400' :
-                      type.toLowerCase() === 'fighting' ? 'bg-orange-700' :
-                      type.toLowerCase() === 'poison' ? 'bg-purple-500' :
-                      type.toLowerCase() === 'ground' ? 'bg-amber-800' :
-                      type.toLowerCase() === 'flying' ? 'bg-indigo-400' :
-                      type.toLowerCase() === 'psychic' ? 'bg-pink-500' :
-                      type.toLowerCase() === 'bug' ? 'bg-lime-500' :
-                      type.toLowerCase() === 'rock' ? 'bg-stone-500' :
-                      type.toLowerCase() === 'ghost' ? 'bg-violet-700' :
-                      type.toLowerCase() === 'dragon' ? 'bg-violet-500' :
-                      type.toLowerCase() === 'dark' ? 'bg-gray-800' :
-                      type.toLowerCase() === 'steel' ? 'bg-slate-400' :
-                      type.toLowerCase() === 'fairy' ? 'bg-pink-300' :
-                      'bg-gray-500'}`}
-                  >
-                    {type}
-                  </span>
-                ))}
-              </div>
-              <div className="h-2 bg-gray-700 rounded">
-                <motion.div
-                  className="h-full bg-green-500 rounded"
-                  initial={{ width: '100%' }}
-                  animate={{
-                    width: `${(battleState.playerPokemon.currentHP / calculateMaxHP(battleState.playerPokemon.stats.currentForm.baseStats.hp)) * 100}%`
-                  }}
-                  transition={{ duration: 0.5 }}
-                />
-              </div>
-              <div className="text-xs mt-1">
-                {battleState.playerPokemon.currentHP} / {calculateMaxHP(battleState.playerPokemon.stats.currentForm.baseStats.hp)}
-              </div>
-            </div>
           </motion.div>
+
+          {/* Stats Card */}
+          <div className="bg-white/10 rounded-lg backdrop-blur-sm p-2">
+            <div className="flex items-center gap-2">
+              <div className="text-sm font-bold">{battleState.playerPokemon.stats.currentForm.name}</div>
+              <div className="text-xs bg-blue-500 px-1.5 rounded">
+                Lv.{battleState.playerPokemon.stats.currentForm.level}
+              </div>
+              {battleState.playerStatus && (
+                <div className="text-lg" title={battleState.playerStatus.type}>
+                  {STATUS_EMOJIS[battleState.playerStatus.type]}
+                </div>
+              )}
+            </div>
+            <div className="flex gap-1 mb-1">
+              {battleState.playerPokemon.stats.currentForm.types.map((type) => (
+                <span
+                  key={type}
+                  className={`text-xs px-1.5 py-0.5 rounded-sm uppercase
+                    ${type.toLowerCase() === 'fire' ? 'bg-red-500' :
+                    type.toLowerCase() === 'water' ? 'bg-blue-500' :
+                    type.toLowerCase() === 'grass' ? 'bg-green-500' :
+                    type.toLowerCase() === 'electric' ? 'bg-yellow-500' :
+                    type.toLowerCase() === 'ice' ? 'bg-cyan-400' :
+                    type.toLowerCase() === 'fighting' ? 'bg-orange-700' :
+                    type.toLowerCase() === 'poison' ? 'bg-purple-500' :
+                    type.toLowerCase() === 'ground' ? 'bg-amber-800' :
+                    type.toLowerCase() === 'flying' ? 'bg-indigo-400' :
+                    type.toLowerCase() === 'psychic' ? 'bg-pink-500' :
+                    type.toLowerCase() === 'bug' ? 'bg-lime-500' :
+                    type.toLowerCase() === 'rock' ? 'bg-stone-500' :
+                    type.toLowerCase() === 'ghost' ? 'bg-violet-700' :
+                    type.toLowerCase() === 'dragon' ? 'bg-violet-500' :
+                    type.toLowerCase() === 'dark' ? 'bg-gray-800' :
+                    type.toLowerCase() === 'steel' ? 'bg-slate-400' :
+                    type.toLowerCase() === 'fairy' ? 'bg-pink-300' :
+                    'bg-gray-500'}`}
+                >
+                  {type}
+                </span>
+              ))}
+            </div>
+            <div className="h-2 bg-gray-700 rounded">
+              <motion.div
+                className="h-full bg-green-500 rounded"
+                initial={{ width: '100%' }}
+                animate={{
+                  width: `${(battleState.playerPokemon.currentHP / calculateMaxHP(battleState.playerPokemon.stats.currentForm.baseStats.hp)) * 100}%`
+                }}
+                transition={{ duration: 0.5 }}
+              />
+            </div>
+            <div className="text-xs mt-1">
+              {battleState.playerPokemon.currentHP} / {calculateMaxHP(battleState.playerPokemon.stats.currentForm.baseStats.hp)}
+            </div>
+          </div>
         </div>
 
-        {/* Attack Effects */}
-        <AnimatePresence>
-          {attackAnimation.isAnimating && attackAnimation.type && (
-            <motion.div
-              className="absolute inset-0 flex items-center justify-center"
-              variants={TYPE_ANIMATIONS[attackAnimation.type]?.animation || TYPE_ANIMATIONS.normal.animation}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-            >
-              <div className="text-6xl">
-                {TYPE_ANIMATIONS[attackAnimation.type]?.emoji || TYPE_ANIMATIONS.normal.emoji}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Status Effect Overlays */}
+        {battleState.playerStatus && (
+          <motion.div
+            className="absolute bottom-4 left-4 w-48 h-48 rounded-lg"
+            variants={STATUS_ANIMATIONS[battleState.playerStatus.type]}
+            animate="animate"
+          />
+        )}
+        {battleState.wildStatus && (
+          <motion.div
+            className="absolute top-10 right-4 w-48 h-48 rounded-lg"
+            variants={STATUS_ANIMATIONS[battleState.wildStatus.type]}
+            animate="animate"
+          />
+        )}
       </div>
 
       {/* Battle Controls */}
@@ -806,20 +1087,6 @@ export function BattleArena({
             </div>
           </div>
         )}
-
-        {/* Battle Log */}
-        <div className="bg-gray-700 rounded-lg p-2 h-20 overflow-y-auto">
-            {battleState.battleLog.map((log, index) => (
-                <motion.p
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-sm mb-1"
-                >
-                    {">"} {log}
-                </motion.p>
-            ))}
-        </div>
 
         {/* Moves and Actions */}
         <div className="grid  gap-4">

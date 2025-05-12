@@ -1,13 +1,13 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { supabase } from "@/lib/supabase"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
+import { motion } from "framer-motion"
 
 export function LoginForm() {
     const [email, setEmail] = useState("")
@@ -29,7 +29,6 @@ export function LoginForm() {
 
             if (error) throw error
 
-            // Check if we have a session after login
             const { data: { session } } = await supabase.auth.getSession()
             console.log("Session after login:", session)
 
@@ -47,22 +46,65 @@ export function LoginForm() {
     }
 
     return (
-        <div className="w-[350px] mx-auto font-mono">
+        <motion.div 
+            className="w-[350px] mx-auto font-mono"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+        >
             {/* Kanto Pokedex Mini Frame */}
-            <div className="w-full bg-red-700 shadow-lg border-red-900 rounded-lg overflow-hidden">
+            <div className="w-full bg-gradient-to-b from-red-600 to-red-700 shadow-lg border-4 border-red-800 rounded-lg overflow-hidden">
+                {/* Top LED Lights */}
+                <motion.div 
+                    className="flex items-center gap-4 p-3 border-b-4 border-red-800"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                >
+                    <div className="w-5 h-5 rounded-full bg-blue-400 border-2 border-blue-600 animate-pulse shadow-lg"></div>
+                    <div className="flex gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-400 border border-red-600"></div>
+                        <div className="w-3 h-3 rounded-full bg-yellow-400 border border-yellow-600"></div>
+                        <div className="w-3 h-3 rounded-full bg-green-500 border border-green-700"></div>
+                    </div>
+                </motion.div>
+
                 {/* Screen Area */}
-                <div className="m-2 bg-gray-700 rounded border-2 border-gray-800 shadow-inner p-2">
-                    <div className="bg-lime-100 rounded overflow-hidden border-2 border-lime-500">
+                <div className="m-4 bg-gray-800 rounded-lg border-4 border-gray-900 shadow-inner p-2">
+                    <motion.div 
+                        className="bg-gradient-to-b from-lime-100 to-lime-200 rounded-lg overflow-hidden border-2 border-lime-500"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.4 }}
+                    >
                         {/* Header */}
-                        <div className="bg-lime-200 border-b-2 border-lime-500 p-3">
-                            <h1 className="text-black font-bold text-lg uppercase tracking-wide text-center">Login</h1>
-                            <p className="text-gray-700 text-sm text-center mt-1">Welcome back to your Pokedex!</p>
+                        <div className="bg-lime-300 border-b-2 border-lime-500 p-4">
+                            <motion.h1 
+                                className="text-black font-bold text-xl uppercase tracking-wide text-center"
+                                initial={{ opacity: 0, y: -20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.5 }}
+                            >
+                                Login
+                            </motion.h1>
+                            <motion.p 
+                                className="text-gray-700 text-sm text-center mt-1"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.6 }}
+                            >
+                                Welcome back to your Pokedex!
+                            </motion.p>
                         </div>
 
                         {/* Form */}
-                        <form onSubmit={handleLogin} className="p-4 space-y-4">
-                            <div className="space-y-3">
-                                <div className="space-y-1.5">
+                        <form onSubmit={handleLogin} className="p-6 space-y-4">
+                            <motion.div 
+                                className="space-y-3"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.7 }}
+                            >
+                                <div className="space-y-2">
                                     <Label htmlFor="email" className="text-gray-800 font-medium">Email</Label>
                                     <Input
                                         id="email"
@@ -71,10 +113,10 @@ export function LoginForm() {
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
                                         required
-                                        className="bg-lime-50 border-lime-500 text-gray-800 placeholder:text-gray-500"
+                                        className="bg-white border-2 border-gray-300 focus:border-gray-400 text-gray-800 placeholder:text-gray-400"
                                     />
                                 </div>
-                                <div className="space-y-1.5">
+                                <div className="space-y-2">
                                     <Label htmlFor="password" className="text-gray-800 font-medium">Password</Label>
                                     <Input
                                         id="password"
@@ -83,16 +125,29 @@ export function LoginForm() {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
-                                        className="bg-lime-50 border-lime-500 text-gray-800 placeholder:text-gray-500"
+                                        className="bg-white border-2 border-gray-300 focus:border-gray-400 text-gray-800 placeholder:text-gray-400"
                                     />
                                 </div>
-                                {error && <p className="text-sm text-red-600 bg-red-100 p-2 rounded border border-red-200">{error}</p>}
-                            </div>
+                                {error && (
+                                    <motion.p 
+                                        className="text-sm text-red-600 bg-red-100 p-3 rounded-lg border border-red-200"
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                    >
+                                        {error}
+                                    </motion.p>
+                                )}
+                            </motion.div>
 
-                            <div className="pt-2 space-y-3">
+                            <motion.div 
+                                className="pt-2 space-y-4"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.8 }}
+                            >
                                 <Button 
                                     type="submit" 
-                                    className="w-full bg-red-500 hover:bg-red-600 text-white border-b-4 border-red-700 active:border-b-0 active:mt-1 transition-all uppercase font-bold tracking-wide" 
+                                    className="w-full bg-red-500 hover:bg-red-600 text-white border-b-4 border-red-700 active:border-b-0 active:mt-1 transition-all uppercase font-bold tracking-wide h-12" 
                                     disabled={loading}
                                 >
                                     {loading ? "Connecting..." : "Login"}
@@ -103,11 +158,18 @@ export function LoginForm() {
                                         Sign Up
                                     </Link>
                                 </p>
-                            </div>
+                            </motion.div>
                         </form>
+                    </motion.div>
+                </div>
+
+                {/* Bottom Decorative Elements */}
+                <div className="p-4 flex justify-center">
+                    <div className="w-16 h-16 rounded-full bg-gray-800 border-4 border-gray-900 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-full bg-gray-700 border-2 border-gray-600"></div>
                     </div>
                 </div>
             </div>
-        </div>
+        </motion.div>
     )
 }

@@ -1,4 +1,4 @@
-import { SignUpForm } from "@/components/auth/signup-form"
+import { SignupForm } from "@/components/auth/signup-form"
 
 export default function SignUpPage() {
   return (
@@ -11,7 +11,7 @@ export default function SignUpPage() {
         <div className="w-4 h-4 bg-green-500 rounded-full border-2 border-green-700"></div>
       </div>
       
-      <SignUpForm />
+      <SignupForm />
 
       {/* Additional Decorative Elements */}
       <div className="absolute bottom-4 right-4 w-24 h-24 rounded-full border-8 border-white/20"></div>

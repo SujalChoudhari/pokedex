@@ -9,7 +9,10 @@ import { PokemonViewer } from "@/components/pokemon/pokemon-viewer"
 import { Loader } from "@/components/ui/loader"
 import { Plus } from "lucide-react"
 import { toast } from "sonner"
+import type { TrainerProfile, TrainerProfile as TrainerProfileType } from '@/lib/trainer-types'
 import type { PokemonStats } from "@/lib/types"
+import { PokemonTeamSelector } from "@/components/profile/pokemon-team-selector"
+import { calculateTrainerStats } from "@/lib/stats-calculator"
 
 interface CapturedPokemonData {
     id: string
@@ -26,6 +29,77 @@ export default function DashboardPage() {
     const [capturedPokemon, setCapturedPokemon] = useState<CapturedPokemonData[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
+    const [profile, setProfile] = useState<TrainerProfileType | null>(null)
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                setIsLoading(true)
+                setError(null)
+
+                const { data: { session } } = await supabase.auth.getSession()
+                if (!session?.user) {
+                    router.push('/login')
+                    return
+                }
+
+                const { data: trainer, error: trainerError } = await supabase
+                    .from('trainers')
+                    .select('*')
+                    .eq('user_id', session.user.id)
+                    .single()
+
+                if (trainerError && trainerError.code !== 'PGRST116') {
+                    throw trainerError
+                }
+
+                const { data: pokemon, error: pokemonError } = await supabase
+                    .from('captured_pokemon')
+                    .select('id, stats, image_path, captured_at')
+                    .eq('user_id', session.user.id)
+                    .order('captured_at', { ascending: false })
+
+                if (pokemonError) throw pokemonError
+
+                const captured = pokemon.map(p => ({
+                    id: p.id,
+                    stats: p.stats,
+                    imagePath: p.image_path,
+                    captured_at: p.captured_at
+                }))
+
+                const stats = calculateTrainerStats(captured)
+
+                if (trainer) {
+                    // Update trainer stats
+                    const { error: statsError } = await supabase
+                        .from('trainers')
+                        .update({ stats })
+                        .eq('id', trainer.id)
+
+                    if (statsError) {
+                        console.error('Error updating stats:', statsError)
+                    }
+
+                    setProfile({
+                        ...trainer,
+                        stats,
+                        team: trainer.team || [],
+                        captured_pokemon: captured
+                    })
+                }
+
+            } catch (err) {
+                console.error('Error fetching profile:', err)
+                setError('Failed to load profile')
+                toast.error('Failed to load profile')
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchProfile()
+    }, [router])
 
     const fetchPokemon = async () => {
         try {
@@ -76,7 +150,7 @@ export default function DashboardPage() {
                 // Update local state immediately for better UX
                 setCapturedPokemon(prev => prev.filter(p => p.id !== selectedPokemon.id))
                 setSelectedPokemon(null)
-                
+
                 // Verify the deletion was successful
                 const { data } = await supabase
                     .from('captured_pokemon')
@@ -167,15 +241,22 @@ export default function DashboardPage() {
                                         </Button>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                        {capturedPokemon.map((pokemon) => (
-                                            <PokemonCard
-                                                key={pokemon.id}
-                                                stats={pokemon.stats}
-                                                imagePath={pokemon.imagePath}
-                                                onClick={() => setSelectedPokemon(pokemon)}
-                                            />
-                                        ))}
+                                    <div className="">
+
+                                        {/* Pokemon Team */}
+                                        {capturedPokemon && capturedPokemon.length > 0 && (
+                                            <div className="mt-8">
+                                                <PokemonTeamSelector
+                                                    profile={profile as TrainerProfileType}
+                                                    onTeamUpdate={(newTeam) => {
+                                                        setProfile({
+                                                          ...profile,
+                                                          team: newTeam
+                                                        } as TrainerProfile);
+                                                      }}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>

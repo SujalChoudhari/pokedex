@@ -144,3 +144,43 @@
   animation: pokeball-shake 1.8s ease-in-out forwards;
 }
 
+/* Pokeball Animations */
+@keyframes shake {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+
+@keyframes flash {
+  0% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes flash-fade {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.animate-pokeball-shake {
+  animation: shake 0.5s cubic-bezier(0.36, 0, 0.66, -0.56) infinite;
+}
+
+.animate-pokeball-flash {
+  animation: flash 0.3s ease-out;
+}
+
+.animate-flash-fade {
+  animation: flash-fade 0.5s ease-out forwards;
+}
+
+/* Pokeball bounce animation */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-pokeball-bounce {
+  animation: bounce 0.5s ease-in-out;
+}
+
